@@ -6,6 +6,7 @@ import java.sql.Connection;
 
 import java.sql.DriverManager;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 
@@ -125,4 +126,7 @@ public class ConexaoMySQL {
 
     }
 
+    public static PreparedStatement prepareStatement(String query) {
+        return null;
+    }
 }

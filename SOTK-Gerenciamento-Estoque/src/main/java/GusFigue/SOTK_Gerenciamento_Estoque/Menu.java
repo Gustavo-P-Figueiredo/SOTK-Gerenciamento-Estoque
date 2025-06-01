@@ -7,25 +7,27 @@ import MODELO.Pedido;
 import MODELO.Produto;
 import MODELO.Sede;
 
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Menu {
 
     private static final Scanner scanner = new Scanner(System.in);
     private static final ProdutoDAO produtoDAO = new ProdutoDAO();
+    private static final PedidoDAO pedidoDAO = new PedidoDAO();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         int opcao;
 
         do {
             System.out.println("===== MENU WMS =====");
             System.out.println("1. Cadastrar Produto"); //DONE CHECK
             System.out.println("2. Cadastrar Sede"); // DONE CHECK
-            System.out.println("3. Realizar Pedido"); // DOTO
+            System.out.println("3. Realizar Pedido"); // DONE CHECK
             System.out.println("4. Consultar Estoque"); //DOTO
             System.out.println("5. Listar Produtos"); //DONE CHECK
             System.out.println("6. Listar Sedes"); //DONE CHECK
-            System.out.println("7. Listar Pedidos"); //DOTO
+            System.out.println("7. Listar Pedidos"); //DONE CHECK
             System.out.println("8. Sair"); //DONE
             System.out.print("Escolha uma opção: ");
 
@@ -44,7 +46,7 @@ public class Menu {
                     cadastrarSede();
                     break;
                 case 3:
-                    //realizarPedido();
+                    realizarPedido();
                     break;
                 case 4:
                     //cadastrarProduto();
@@ -56,19 +58,16 @@ public class Menu {
                     sedeLista();
                     break;
                 case 7:
-                    //cadastrarProduto();
+                    pedidoLista();
                     break;
                 case 8:
-                    //cadastrarProduto();
-                    break;
-                case 9:
                     System.out.println("Encerrando...");
                     break;
                 default:
                     System.out.println("Opção inválida. Tente novamente.");
             }
 
-        } while (opcao != 9);
+        } while (opcao != 8);
     }
 
 
@@ -162,7 +161,62 @@ public class Menu {
         }
     }
 
+    //CASE 3
+    public static void realizarPedido() throws SQLException {
+        System.out.println("=== Realizar Pedido ===");
+        System.out.println("Quantidade pedida: ");
+        int quantidade = scanner.nextInt();
 
+        System.out.println("=== Cadastrar Sede ===");
+        System.out.println("ID do produto desejado: ");
+        int prod_id = scanner.nextInt();
+
+        System.out.println("=== Realizar Pedido ===");
+        System.out.println("ID da Sede que o pedido será registrado: ");
+        int sede_id = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.println("=== Realizar Pedido ===");
+        System.out.println("Cidade de entrega: ");
+        String cidade = scanner.nextLine();
+
+        System.out.println("=== Realizar Pedido ===");
+        System.out.println("Rua de entrega: ");
+        String rua = scanner.nextLine();
+
+        System.out.println("=== Realizar Pedido ===");
+        System.out.println("Numeração de casa para entrega : ");
+        int numeracao = scanner.nextInt();
+
+        Pedido pedido = new Pedido();
+        pedido.setPedido_Quant(quantidade);
+        pedido.setProduto_Id(prod_id);
+        pedido.setSede_Id(sede_id);
+        pedido.setPedido_Cidade(cidade);
+        pedido.setPedido_Rua(rua);
+        pedido.setPedido_numeracao(numeracao);
+
+
+        PedidoDAO.realizarPedido(pedido);
+        System.out.println("Pedido realizado com sucesso!");
+        System.out.println("-------------------------------");
+    }
+
+    //CASE 7
+    private static void pedidoLista() {
+        System.out.println("=== Lista de Pedidos solicitados ===");
+        for (Pedido pedido : pedidoDAO.pedidoListar()) {
+            System.out.println("ID do pedido: " + pedido.getPedido_Id());
+            System.out.println("Data do pedido: " + pedido.getPedido_Data());
+            System.out.println("Quantidade: " + pedido.getPedido_Quant());
+            System.out.println("ID do produto solicitado: " + pedido.getProduto_Id());
+            System.out.println("ID da sede solititante: " + pedido.getSede_Id());
+            System.out.println("Cidade para entrega: " + pedido.getPedido_Cidade());
+            System.out.println("Rua para entrega: " + pedido.getPedido_Rua());
+            System.out.println("Numero de residencia para entrega: " + pedido.getPedido_numeracao());
+            System.out.println("-------------------------------");
+        }
+    }
 
 }
 
