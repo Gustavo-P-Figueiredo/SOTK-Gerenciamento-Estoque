@@ -1,13 +1,16 @@
 package GusFigue.SOTK_Gerenciamento_Estoque;
 
+import DAO.EstoqueDAO;
 import DAO.PedidoDAO;
 import DAO.ProdutoDAO;
 import DAO.SedeDAO;
+import MODELO.Estoque;
 import MODELO.Pedido;
 import MODELO.Produto;
 import MODELO.Sede;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Menu {
@@ -15,6 +18,8 @@ public class Menu {
     private static final Scanner scanner = new Scanner(System.in);
     private static final ProdutoDAO produtoDAO = new ProdutoDAO();
     private static final PedidoDAO pedidoDAO = new PedidoDAO();
+    private static Estoque estoque;
+
 
     public static void main(String[] args) throws SQLException {
         int opcao;
@@ -24,7 +29,7 @@ public class Menu {
             System.out.println("1. Cadastrar Produto"); //DONE CHECK
             System.out.println("2. Cadastrar Sede"); // DONE CHECK
             System.out.println("3. Realizar Pedido"); // DONE CHECK
-            System.out.println("4. Consultar Estoque"); //DOTO
+            System.out.println("4. Consultar Estoque"); //DONE CHECK
             System.out.println("5. Listar Produtos"); //DONE CHECK
             System.out.println("6. Listar Sedes"); //DONE CHECK
             System.out.println("7. Listar Pedidos"); //DONE CHECK
@@ -49,7 +54,7 @@ public class Menu {
                     realizarPedido();
                     break;
                 case 4:
-                    //cadastrarProduto();
+                    consultarEstoque();
                     break;
                 case 5:
                     produtoLista();
@@ -218,7 +223,30 @@ public class Menu {
         }
     }
 
+
+    //CASE 4
+    private static void consultarEstoque() {
+        System.out.println("=== Consultar Estoque por Sede ===");
+        System.out.print("Digite o ID da sede: ");
+        int sedeId = scanner.nextInt();
+        scanner.nextLine(); // Limpar quebra de linha
+
+        List<Estoque> estoqueList = EstoqueDAO.consultarEstoquePorSede(sedeId);
+
+        if (estoqueList.isEmpty()) {
+            System.out.println("Nenhum produto encontrado para esta sede.");
+        } else {
+            for (Estoque estoque : estoqueList) {
+                System.out.println("Produto: " + estoque.getProduto_Nome());
+                System.out.println("Quantidade em estoque: " + Estoque.getQuantidade());
+                System.out.println("-------------------------------");
+            }
+        }
+    }
 }
+
+
+
 
 
 
