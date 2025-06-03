@@ -1,15 +1,11 @@
 package GusFigue.SOTK_Gerenciamento_Estoque;
 
-import DAO.EstoqueDAO;
-import DAO.PedidoDAO;
-import DAO.ProdutoDAO;
-import DAO.SedeDAO;
-import MODELO.Estoque;
-import MODELO.Pedido;
-import MODELO.Produto;
-import MODELO.Sede;
+import DAO.*;
+import MODELO.*;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -18,30 +14,30 @@ public class Menu {
     private static final Scanner scanner = new Scanner(System.in);
     private static final ProdutoDAO produtoDAO = new ProdutoDAO();
     private static final PedidoDAO pedidoDAO = new PedidoDAO();
-    private static Estoque estoque;
 
 
     public static void main(String[] args) throws SQLException {
         int opcao;
 
         do {
-            System.out.println("===== MENU WMS =====");
-            System.out.println("1. Cadastrar Produto"); //DONE CHECK
-            System.out.println("2. Cadastrar Sede"); // DONE CHECK
-            System.out.println("3. Realizar Pedido"); // DONE CHECK
-            System.out.println("4. Consultar Estoque"); //DONE CHECK
-            System.out.println("5. Listar Produtos"); //DONE CHECK
-            System.out.println("6. Listar Sedes"); //DONE CHECK
-            System.out.println("7. Listar Pedidos"); //DONE CHECK
-            System.out.println("8. Sair"); //DONE
+            System.out.println("===== MENU SOTK =====");
+            System.out.println("1. Cadastrar Produto"); //DONE CHECK FUNCIONAL
+            System.out.println("2. Cadastrar Sede"); // DONE CHECK FUNCIONAL
+            System.out.println("3. Realizar Pedido"); // DONE CHECK FUNCIONAL
+            System.out.println("4. Registrar Venda"); // DONE CHECK FUNCIONAL
+            System.out.println("5. Consultar Estoque"); //DONE CHECK FUNCIONAL
+            System.out.println("6. Listar Produtos"); //DONE CHECK FUNCIONAL
+            System.out.println("7. Listar Sedes"); //DONE CHECK FUNCIONAL
+            System.out.println("8. Listar Pedidos"); //DONE CHECK FUNCIONAL
+            System.out.println("9. Sair"); //DONE
             System.out.print("Escolha uma opção: ");
 
             while (!scanner.hasNextInt()) {
                 System.out.println("Digite um número válido.");
-                scanner.next(); // limpar entrada inválida
+                scanner.next();
             }
             opcao = scanner.nextInt();
-            scanner.nextLine(); // consumir a quebra de linha
+            scanner.nextLine();
 
             switch (opcao) {
                 case 1:
@@ -54,18 +50,21 @@ public class Menu {
                     realizarPedido();
                     break;
                 case 4:
-                    consultarEstoque();
+                    registrarVenda();
                     break;
                 case 5:
-                    produtoLista();
+                    consultarEstoque();
                     break;
                 case 6:
-                    sedeLista();
+                    produtoLista();
                     break;
                 case 7:
-                    pedidoLista();
+                    sedeLista();
                     break;
                 case 8:
+                    pedidoLista();
+                    break;
+                case 9:
                     System.out.println("Encerrando...");
                     break;
                 default:
@@ -78,7 +77,7 @@ public class Menu {
 
     //CASE 1
     public static void cadastrarProduto() {
-        System.out.println("=== Cadastro de Produto ===");
+        System.out.println("=== Cadastrar Produto ===");
         System.out.print("Nome do produto: ");
         String nome = scanner.nextLine();
 
@@ -135,7 +134,7 @@ public class Menu {
         String rua = scanner.nextLine();
 
         System.out.println("=== Cadastrar Sede ===");
-        System.out.println("Numeração da Sede: ");
+        System.out.println("Numero de residencia da Sede: ");
         int numeracao = scanner.nextInt();
 
         Sede sede = new Sede();
@@ -146,7 +145,7 @@ public class Menu {
         sede.setSede_Numeracao(numeracao);
 
         SedeDAO.cadastrarSede(sede);
-        System.out.println("Produto cadastrado com sucesso!");
+        System.out.println("Sede cadastrada com sucesso!");
         System.out.println("-------------------------------");
 
     }
@@ -160,7 +159,7 @@ public class Menu {
             System.out.println("Lider: " + sede.getSede_Lider());
             System.out.println("Cidade: " + sede.getSede_Cidade());
             System.out.println("Rua: " + sede.getSede_Rua());
-            System.out.println("Numeração: " + sede.getSede_Numeracao());
+            System.out.println("Numero de residencia: " + sede.getSede_Numeracao());
             System.out.println("-------------------------------");
 
         }
@@ -190,7 +189,7 @@ public class Menu {
         String rua = scanner.nextLine();
 
         System.out.println("=== Realizar Pedido ===");
-        System.out.println("Numeração de casa para entrega : ");
+        System.out.println("Numero de residencia para entrega : ");
         int numeracao = scanner.nextInt();
 
         Pedido pedido = new Pedido();
@@ -238,12 +237,44 @@ public class Menu {
         } else {
             for (Estoque estoque : estoqueList) {
                 System.out.println("Produto: " + estoque.getProduto_Nome());
-                System.out.println("Quantidade em estoque: " + Estoque.getQuantidade());
+                System.out.println("Quantidade em estoque: " + estoque.getQuantidade());
                 System.out.println("-------------------------------");
             }
         }
     }
-}
+
+    //CASE 9
+        public static void registrarVenda() {
+            VendaDAO vendaDAO = new VendaDAO();
+            List<Venda.ItemVenda> itens = new ArrayList<>();
+
+            System.out.print("ID da sede onde a venda está sendo feita: ");
+            int idSede = scanner.nextInt();
+
+            while (true) {
+                System.out.print("ID do produto (ou 0 para finalizar): ");
+                int idProduto = scanner.nextInt();
+                if (idProduto == 0) break;
+
+                System.out.print("Quantidade vendida: ");
+                int qtd = scanner.nextInt();
+
+                itens.add(new Venda.ItemVenda(idProduto, qtd));
+            }
+
+            if (!itens.isEmpty()) {
+                vendaDAO.registrarVenda(idSede, itens);
+            } else {
+                System.out.println("❌ Nenhum item foi adicionado. Venda cancelada.");
+            }
+        }
+    }
+
+
+
+
+
+
 
 
 
