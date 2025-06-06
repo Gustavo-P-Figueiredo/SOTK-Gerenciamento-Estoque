@@ -1,6 +1,7 @@
 package DAO;
 
 import MODELO.Pedido;
+import MODELO.Produto;
 import Util.ConexaoMySQL;
 
 import java.sql.Connection;
@@ -9,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
 
 public class PedidoDAO {
     public static boolean sedeExiste(int sedeId) throws SQLException {
@@ -22,90 +24,71 @@ public class PedidoDAO {
         }
     }
 
-    public static void realizarPedido(Pedido pedido) {
-        String insertPedidoSQL = """
-        INSERT INTO tb_pedido
-          (pedido_quant, sede_id, prod_id, Pedido_Cidade, Pedido_Rua, Pedido_numero)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """;
+    // Método para cadastrar um pedido e atualizar o estoque do produto no centro de distribuição (CD)
+    public static boolean cadastrarPedido(Pedido pedido) {
+        // SQL para consultar o estoque atual no CD
+        String sqlEstoque = "SELECT Quant_CD FROM tb_produto WHERE Prod_id = ?";
+        // SQL para atualizar o estoque no CD (diminuir a quantidade)
+        String sqlUpdateEstoque = "UPDATE tb_produto SET Quant_CD = Quant_CD - ? WHERE Prod_id = ?";
+        // SQL para inserir o pedido na tabela de pedidos
+        String sqlInserirPedido = "INSERT INTO tb_pedido (prod_id, quantidade, sede_id, data_pedido) VALUES (?, ?, ?, NOW())";
 
-        String checkEstoqueSQL = """
-        SELECT quantidade
-        FROM tb_estoque
-        WHERE Sede_id = ? AND Prod_id = ?
-        """;
+        // Abre a conexão com o banco
+        try (Connection conn = ConexaoMySQL.getConexaoMySQL()) {
+            conn.setAutoCommit(false); // Inicia a transação manualmente
 
-        String updateEstoqueSQL = """
-        UPDATE tb_estoque
-        SET quantidade = quantidade + ?
-        WHERE Sede_id = ? AND Prod_id = ?
-        """;
+            try (
+                    PreparedStatement psEstoque = conn.prepareStatement(sqlEstoque);
+                    PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateEstoque);
+                    PreparedStatement psPedido = conn.prepareStatement(sqlInserirPedido);
+            ) {
+                // 1. Verifica o estoque atual do produto no CD
+                psEstoque.setInt(1, pedido.getProduto_Id());
+                ResultSet rs = psEstoque.executeQuery();
 
-        String insertEstoqueSQL = """
-        INSERT INTO tb_estoque (Sede_id, Prod_id, quantidade)
-        VALUES (?, ?, ?)
-        """;
-
-        Connection conn = null;
-
-        try {
-            conn = ConexaoMySQL.getConexaoMySQL();
-            conn.setAutoCommit(false);
-
-            try (PreparedStatement stmtPedido = conn.prepareStatement(insertPedidoSQL)) {
-                stmtPedido.setInt(1, pedido.getPedido_Quant());
-                stmtPedido.setInt(2, pedido.getSede_Id());
-                stmtPedido.setInt(3, pedido.getProduto_Id());
-                stmtPedido.setString(4, pedido.getPedido_Cidade());
-                stmtPedido.setString(5, pedido.getPedido_Rua());
-                stmtPedido.setInt(6, pedido.getPedido_numeracao());
-                stmtPedido.executeUpdate();
-            }
-
-            boolean estoqueExiste;
-            try (PreparedStatement stmtCheck = conn.prepareStatement(checkEstoqueSQL)) {
-                stmtCheck.setInt(1, pedido.getSede_Id());
-                stmtCheck.setInt(2, pedido.getProduto_Id());
-                try (ResultSet rs = stmtCheck.executeQuery()) {
-                    estoqueExiste = rs.next();
+                if (!rs.next()) {
+                    System.out.println("Produto com ID " + pedido.getProduto_Id() + " não encontrado no estoque do CD. Fale com o time de compras.");
+                    conn.rollback(); // Desfaz qualquer operação
+                    return false;
                 }
-            }
 
-            if (estoqueExiste) {
-                try (PreparedStatement stmtUpdate = conn.prepareStatement(updateEstoqueSQL)) {
-                    stmtUpdate.setInt(1, pedido.getPedido_Quant());
-                    stmtUpdate.setInt(2, pedido.getSede_Id());
-                    stmtUpdate.setInt(3, pedido.getProduto_Id());
-                    stmtUpdate.executeUpdate();
+                int estoqueAtual = rs.getInt("Quant_CD");
+
+                if (estoqueAtual < pedido.getPedido_Quant()) {
+                    System.out.println("Estoque insuficiente no CD para o produto ID: " + pedido.getProduto_Id() +
+                            ". Disponível: " + estoqueAtual + ", Solicitado: " + pedido.getPedido_Quant());
+                    conn.rollback(); // Desfaz qualquer operação
+                    return false;
                 }
-            } else {
-                try (PreparedStatement stmtInsert = conn.prepareStatement(insertEstoqueSQL)) {
-                    stmtInsert.setInt(1, pedido.getSede_Id());
-                    stmtInsert.setInt(2, pedido.getProduto_Id());
-                    stmtInsert.setInt(3, pedido.getPedido_Quant());
-                    stmtInsert.executeUpdate();
-                }
-            }
 
-            conn.commit();
-            System.out.println("[LOG] Pedido realizado e estoque atualizado com sucesso.");
+                // 2. Atualiza o estoque no CD (retira a quantidade do pedido)
+                psUpdate.setInt(1, pedido.getPedido_Quant());
+                psUpdate.setInt(2, pedido.getProduto_Id());
+                psUpdate.executeUpdate();
 
-        } catch (SQLException e) {
-            System.err.println("[ERRO] Falha ao realizar pedido: " + e.getMessage());
-            try {
-                if (conn != null) conn.rollback();
-            } catch (SQLException ex) {
-                System.err.println("[ERRO] Falha ao fazer rollback: " + ex.getMessage());
-            }
-        } finally {
-            try {
-                if (conn != null) conn.setAutoCommit(true);
-                if (conn != null) conn.close();
+                // 3. Insere o pedido na tabela de pedidos
+                psPedido.setInt(1, pedido.getProduto_Id());
+                psPedido.setInt(2, pedido.getPedido_Quant());
+                psPedido.setInt(3, pedido.getSede_Id());
+                psPedido.executeUpdate();
+
+                conn.commit(); // Confirma todas as operações no banco
+                System.out.println("Pedido cadastrado com sucesso!");
+                return true;
+
             } catch (SQLException e) {
-                System.err.println("[ERRO] Falha ao fechar conexão: " + e.getMessage());
+                conn.rollback(); // Se der erro, desfaz tudo
+                System.out.println("Erro ao cadastrar pedido. Transação revertida.");
+                e.printStackTrace();
+                return false;
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
+
+}
 
     public List<Pedido> pedidoListar() {
         List<Pedido> pedidos = new ArrayList<>();
@@ -136,4 +119,15 @@ public class PedidoDAO {
 
         return pedidos;
     }
+
 }
+
+
+
+
+
+
+
+
+
+

@@ -1,11 +1,12 @@
 package MODELO;
 
 public class Produto {
-    int Produto_Id;
+    static int Produto_Id;
     String Produto_Nome;
     double Produto_Valor;
+    int Quant_CD;
 
-    public int getProduto_Id(){
+    public static String getProduto_Id(){
         return Produto_Id;
     }
 
@@ -30,4 +31,11 @@ public class Produto {
         this.Produto_Valor = produto_Valor;
     }
 
+    public int getQuant_CD() {
+        return Quant_CD;
+    }
+
+    public void setQuant_CD(int quant_CD) {
+        this.Quant_CD = quant_CD;
+    }
 }

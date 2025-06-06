@@ -4,6 +4,8 @@ import java.sql.Date;
 
 public class Pedido {
     public static int quant;
+    public static String getPedido_Status;
+    public static int getPedido_id;
     int Pedido_Id;
     Date Pedido_Data;
     int Pedido_Quant;
@@ -11,10 +13,13 @@ public class Pedido {
     String Pedido_Rua;
     int Pedido_numeracao;
     int Produto_Id;
-    int Sede_Id; //Get Setter
+    int Sede_Id;
+    String Pedido_Status;
 
 
-    public int getPedido_Id() {return Pedido_Id;}
+    public int getPedido_Id() {
+        return Pedido_Id;
+    }
 
     public void setPedido_Id(int pedido_id) {
         this.Pedido_Id = pedido_id;
@@ -66,7 +71,7 @@ public class Pedido {
     }
 
 
-    public int getProduto_Id(){
+    public int getProduto_Id() {
         return Produto_Id;
     }
 
@@ -79,9 +84,17 @@ public class Pedido {
         return Sede_Id;
     }
 
-    public void setSede_Id(int sede_Id){
+    public void setSede_Id(int sede_Id) {
         this.Sede_Id = sede_Id;
-
     }
+
+    public String getPedido_Status() {
+        return Pedido_Status;
+    }
+
+    public void setPedido_Status(String Pedido_Status) {
+        this.Pedido_Status = Pedido_Status;
+    }
+
 
 }

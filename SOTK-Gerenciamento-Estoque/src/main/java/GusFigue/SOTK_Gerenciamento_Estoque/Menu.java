@@ -2,12 +2,14 @@ package GusFigue.SOTK_Gerenciamento_Estoque;
 
 import DAO.*;
 import MODELO.*;
+import jdk.jshell.Snippet;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
 
 public class Menu {
 
@@ -29,7 +31,8 @@ public class Menu {
             System.out.println("6. Listar Produtos"); //DONE CHECK FUNCIONAL
             System.out.println("7. Listar Sedes"); //DONE CHECK FUNCIONAL
             System.out.println("8. Listar Pedidos"); //DONE CHECK FUNCIONAL
-            System.out.println("9. Sair"); //DONE
+            System.out.println("9. Consultar Status de pedido"); //DONE
+            System.out.println("10. sair");
             System.out.print("Escolha uma opção: ");
 
             while (!scanner.hasNextInt()) {
@@ -47,7 +50,7 @@ public class Menu {
                     cadastrarSede();
                     break;
                 case 3:
-                    realizarPedido();
+                    cadastrarPedido();
                     break;
                 case 4:
                     registrarVenda();
@@ -65,17 +68,23 @@ public class Menu {
                     pedidoLista();
                     break;
                 case 9:
+                    consultarStatus();
+                    break;
+                case 10:
+                    alterarStatus();
+                    break;
+                case 11:
                     System.out.println("Encerrando...");
                     break;
                 default:
                     System.out.println("Opção inválida. Tente novamente.");
             }
 
-        } while (opcao != 8);
+        } while (opcao != 11);
     }
 
 
-    //CASE 1
+    // CASE 1
     public static void cadastrarProduto() {
         System.out.println("=== Cadastrar Produto ===");
         System.out.print("Nome do produto: ");
@@ -94,46 +103,34 @@ public class Menu {
             }
         }
 
+        System.out.println("Insira a quantidade total de unidades no centro de distribuição");
+        int quant_CD = scanner.nextInt();
+
         Produto produto = new Produto();
         produto.setProduto_Nome(nome);
         produto.setProduto_Valor(valor);
+        produto.setQuant_CD(quant_CD);
 
         produtoDAO.cadastrar(produto);
         System.out.println("Produto cadastrado com sucesso!");
         System.out.println("-------------------------------");
-
     }
 
-    //CASE 5
-    private static void produtoLista() {
-        System.out.println("=== Lista de Produtos Cadastrados ===");
-        for (Produto produto : produtoDAO.listar()) {
-            System.out.println("ID: " + produto.getProduto_Id());
-            System.out.println("Nome: " + produto.getProduto_Nome());
-            System.out.println("Valor: R$ " + produto.getProduto_Valor());
-            System.out.println("-------------------------------");
-        }
-    }
-
-    //CASE 2
+    // CASE 2
     public static void cadastrarSede() {
         System.out.println("=== Cadastrar Sede ===");
         System.out.println("Nome da Sede: ");
         String nome = scanner.nextLine();
 
-        System.out.println("=== Cadastrar Sede ===");
         System.out.println("Lider da Sede: ");
         String lider = scanner.nextLine();
 
-        System.out.println("=== Cadastrar Sede ===");
         System.out.println("Cidade da Sede: ");
         String cidade = scanner.nextLine();
 
-        System.out.println("=== Cadastrar Sede ===");
         System.out.println("Rua da Sede: ");
         String rua = scanner.nextLine();
 
-        System.out.println("=== Cadastrar Sede ===");
         System.out.println("Numero de residencia da Sede: ");
         int numeracao = scanner.nextInt();
 
@@ -147,48 +144,27 @@ public class Menu {
         SedeDAO.cadastrarSede(sede);
         System.out.println("Sede cadastrada com sucesso!");
         System.out.println("-------------------------------");
-
     }
 
-    //CASE 6
-    public static void sedeLista() {
-        System.out.println("=== Lista de Sedes Cadastradas ===");
-        for (Sede sede : SedeDAO.listar()) {
-            System.out.println("ID: " + sede.getSede_Id());
-            System.out.println("Nome: " + sede.getSede_Nome());
-            System.out.println("Lider: " + sede.getSede_Lider());
-            System.out.println("Cidade: " + sede.getSede_Cidade());
-            System.out.println("Rua: " + sede.getSede_Rua());
-            System.out.println("Numero de residencia: " + sede.getSede_Numeracao());
-            System.out.println("-------------------------------");
-
-        }
-    }
-
-    //CASE 3
-    public static void realizarPedido() throws SQLException {
+    // CASE 3
+    public static void cadastrarPedido() throws SQLException {
         System.out.println("=== Realizar Pedido ===");
         System.out.println("Quantidade pedida: ");
         int quantidade = scanner.nextInt();
 
-        System.out.println("=== Cadastrar Sede ===");
         System.out.println("ID do produto desejado: ");
         int prod_id = scanner.nextInt();
 
-        System.out.println("=== Realizar Pedido ===");
         System.out.println("ID da Sede que o pedido será registrado: ");
         int sede_id = scanner.nextInt();
         scanner.nextLine();
 
-        System.out.println("=== Realizar Pedido ===");
         System.out.println("Cidade de entrega: ");
         String cidade = scanner.nextLine();
 
-        System.out.println("=== Realizar Pedido ===");
         System.out.println("Rua de entrega: ");
         String rua = scanner.nextLine();
 
-        System.out.println("=== Realizar Pedido ===");
         System.out.println("Numero de residencia para entrega : ");
         int numeracao = scanner.nextInt();
 
@@ -200,13 +176,83 @@ public class Menu {
         pedido.setPedido_Rua(rua);
         pedido.setPedido_numeracao(numeracao);
 
-
-        PedidoDAO.realizarPedido(pedido);
         System.out.println("Pedido realizado com sucesso!");
         System.out.println("-------------------------------");
     }
 
-    //CASE 7
+    // CASE 4
+    public static void registrarVenda() {
+        VendaDAO vendaDAO = new VendaDAO();
+        List<Venda.ItemVenda> itens = new ArrayList<>();
+
+        System.out.print("ID da sede onde a venda está sendo feita: ");
+        int idSede = scanner.nextInt();
+
+        while (true) {
+            System.out.print("ID do produto (ou 0 para finalizar): ");
+            int idProduto = scanner.nextInt();
+            if (idProduto == 0) break;
+
+            System.out.print("Quantidade vendida: ");
+            int qtd = scanner.nextInt();
+
+            itens.add(new Venda.ItemVenda(idProduto, qtd));
+        }
+
+        if (!itens.isEmpty()) {
+            vendaDAO.registrarVenda(idSede, itens);
+        } else {
+            System.out.println("Nenhum item foi adicionado. Venda cancelada.");
+        }
+    }
+
+    // CASE 5
+    public static void consultarEstoque() {
+        System.out.println("=== Consultar Estoque por Sede ===");
+        System.out.print("Digite o ID da sede: ");
+        int sedeId = scanner.nextInt();
+        scanner.nextLine();
+
+        List<Estoque> estoqueList = EstoqueDAO.consultarEstoquePorSede(sedeId);
+
+        if (estoqueList.isEmpty()) {
+            System.out.println("Nenhum produto encontrado para esta sede.");
+        } else {
+            for (Estoque estoque : estoqueList) {
+                System.out.println("Produto: " + estoque.getProduto_Nome());
+                System.out.println("Quantidade em estoque: " + estoque.getQuantidade());
+                System.out.println("-------------------------------");
+            }
+        }
+    }
+
+    // CASE 6
+    private static void produtoLista() {
+        System.out.println("=== Lista de Produtos Cadastrados ===");
+        for (Produto produto : produtoDAO.listar()) {
+            System.out.println("ID: " + produto.getProduto_Id());
+            System.out.println("Nome: " + produto.getProduto_Nome());
+            System.out.println("Valor: R$ " + produto.getProduto_Valor());
+            System.out.println("Quantidade disponivel para pedido: " + produto.getQuant_CD());
+            System.out.println("-------------------------------");
+        }
+    }
+
+    // CASE 7
+    public static void sedeLista() {
+        System.out.println("=== Lista de Sedes Cadastradas ===");
+        for (Sede sede : SedeDAO.listar()) {
+            System.out.println("ID: " + sede.getSede_Id());
+            System.out.println("Nome: " + sede.getSede_Nome());
+            System.out.println("Lider: " + sede.getSede_Lider());
+            System.out.println("Cidade: " + sede.getSede_Cidade());
+            System.out.println("Rua: " + sede.getSede_Rua());
+            System.out.println("Numero de residencia: " + sede.getSede_Numeracao());
+            System.out.println("-------------------------------");
+        }
+    }
+
+    // CASE 8
     private static void pedidoLista() {
         System.out.println("=== Lista de Pedidos solicitados ===");
         for (Pedido pedido : pedidoDAO.pedidoListar()) {
@@ -222,53 +268,43 @@ public class Menu {
         }
     }
 
+    // CASE 9
+    public static void consultarStatus() {
+        System.out.println("Digite o ID do pedido: ");
+        int idPedido = scanner.nextInt();
 
-    //CASE 4
-    private static void consultarEstoque() {
-        System.out.println("=== Consultar Estoque por Sede ===");
-        System.out.print("Digite o ID da sede: ");
-        int sedeId = scanner.nextInt();
-        scanner.nextLine(); // Limpar quebra de linha
+        String status = StatusDAO.consultarStatus(idPedido);
 
-        List<Estoque> estoqueList = EstoqueDAO.consultarEstoquePorSede(sedeId);
-
-        if (estoqueList.isEmpty()) {
-            System.out.println("Nenhum produto encontrado para esta sede.");
+        if (status != null) {
+            System.out.println("Status do pedido: " + status);
         } else {
-            for (Estoque estoque : estoqueList) {
-                System.out.println("Produto: " + estoque.getProduto_Nome());
-                System.out.println("Quantidade em estoque: " + estoque.getQuantidade());
-                System.out.println("-------------------------------");
-            }
+            System.out.println("Pedido não encontrado.");
         }
     }
 
-    //CASE 9
-        public static void registrarVenda() {
-            VendaDAO vendaDAO = new VendaDAO();
-            List<Venda.ItemVenda> itens = new ArrayList<>();
+    // CASE 10
+    public static void alterarStatus() {
+        System.out.println("Digite o ID do pedido para atualizar o status:");
+        int Pedido_id = scanner.nextInt();
+        scanner.nextLine();
 
-            System.out.print("ID da sede onde a venda está sendo feita: ");
-            int idSede = scanner.nextInt();
+        System.out.println("Insira o novo status do pedido:");
+        String Pedido_Status = scanner.nextLine();
 
-            while (true) {
-                System.out.print("ID do produto (ou 0 para finalizar): ");
-                int idProduto = scanner.nextInt();
-                if (idProduto == 0) break;
+        Pedido pedido = new Pedido();
+        pedido.setPedido_Id(Pedido_id);
+        pedido.setPedido_Status(Pedido_Status);
 
-                System.out.print("Quantidade vendida: ");
-                int qtd = scanner.nextInt();
+        boolean sucesso = StatusDAO.alterarStatus(pedido);
 
-                itens.add(new Venda.ItemVenda(idProduto, qtd));
-            }
-
-            if (!itens.isEmpty()) {
-                vendaDAO.registrarVenda(idSede, itens);
-            } else {
-                System.out.println("❌ Nenhum item foi adicionado. Venda cancelada.");
-            }
+        if (sucesso) {
+            System.out.println("Status do pedido atualizado com sucesso!");
+        } else {
+            System.out.println("Erro ao atualizar o status.");
         }
     }
+}
+
 
 
 

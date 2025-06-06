@@ -18,7 +18,6 @@ public class VendaDAO {
             conn = ConexaoMySQL.getConexaoMySQL();
             conn.setAutoCommit(false);
 
-            // Inserir venda
             String sqlVenda = "INSERT INTO tb_venda (id_sede, Venda_data) VALUES (?, CURDATE())";
             stmtVenda = conn.prepareStatement(sqlVenda, Statement.RETURN_GENERATED_KEYS);
             stmtVenda.setInt(1, idSede);
@@ -28,22 +27,18 @@ public class VendaDAO {
             if (!rs.next()) throw new SQLException("Falha ao obter ID da venda.");
             int idVenda = rs.getInt(1);
 
-            // Inserir itens da venda
             String sqlItem = "INSERT INTO item_venda (id_venda, id_produto, quantidade) VALUES (?, ?, ?)";
             stmtItem = conn.prepareStatement(sqlItem);
 
-            // Atualizar estoque
             String sqlAtualiza = "UPDATE tb_estoque SET quantidade = quantidade - ? WHERE Sede_id = ? AND Prod_id = ?";
             stmtAtualizaEstoque = conn.prepareStatement(sqlAtualiza);
 
             for (Venda.ItemVenda item : itens) {
-                // Inserir item da venda
                 stmtItem.setInt(1, idVenda);
                 stmtItem.setInt(2, item.getIdProduto());
                 stmtItem.setInt(3, item.getQuantidade());
                 stmtItem.addBatch();
 
-                // Atualizar estoque
                 stmtAtualizaEstoque.setInt(1, item.getQuantidade());
                 stmtAtualizaEstoque.setInt(2, idSede);
                 stmtAtualizaEstoque.setInt(3, item.getIdProduto());
@@ -53,7 +48,7 @@ public class VendaDAO {
             stmtItem.executeBatch();
             stmtAtualizaEstoque.executeBatch();
             conn.commit();
-            System.out.println("✅ Venda registrada com sucesso!");
+            System.out.println("Venda registrada com sucesso!");
 
         } catch (SQLException e) {
             try {

@@ -28,7 +28,7 @@ public class SedeDAO {
             try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     int idGerado = generatedKeys.getInt(1);
-                    sede.setSede_Id(idGerado); // Atualiza o objeto sede com o ID gerado
+                    sede.setSede_Id(idGerado);
 
                 } else {
                     throw new SQLException("Falha ao obter o ID gerado.");

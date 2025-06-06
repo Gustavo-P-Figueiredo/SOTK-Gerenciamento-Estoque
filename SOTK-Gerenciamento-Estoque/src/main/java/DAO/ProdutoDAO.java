@@ -13,13 +13,14 @@ import java.util.List;
 public class ProdutoDAO {
 
     public void cadastrar(Produto produto) {
-        String sql = "INSERT INTO tb_produto (Prod_nome, Prod_valor) VALUES (?, ?)";
+        String sql = "INSERT INTO tb_produto (Prod_nome, Prod_valor, Quant_CD) VALUES (?, ?, ?)";
 
         try (Connection conn = ConexaoMySQL.getConexaoMySQL();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, produto.getProduto_Nome());
             stmt.setDouble(2, produto.getProduto_Valor());
+            stmt.setInt(3, produto.getQuant_CD());
             stmt.executeUpdate();
 
         } catch (SQLException e) {
@@ -41,6 +42,7 @@ public class ProdutoDAO {
                 produto.setProduto_Id(rs.getInt("Prod_id"));
                 produto.setProduto_Nome(rs.getString("Prod_nome"));
                 produto.setProduto_Valor(rs.getDouble("Prod_valor"));
+                produto.setQuant_CD(rs.getInt("Quant_CD"));
 
                 produtos.add(produto);
             }
@@ -53,7 +55,24 @@ public class ProdutoDAO {
         return produtos;
     }
 
+    public Produto ConfirmarProduto(Produto produto) {
+        String sql = "SELECT * FROM produto WHERE id = ?";
+        try (Connection conn = ConexaoMySQL.getConexaoMySQL();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, produto.getProduto_Id());
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao cadastrar produto no banco de dados.");
+            e.printStackTrace();
+        }
+        return produto;
+    }
+
 
 
 
 }
+
+

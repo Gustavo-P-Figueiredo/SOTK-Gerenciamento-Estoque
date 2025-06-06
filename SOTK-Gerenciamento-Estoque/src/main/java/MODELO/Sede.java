@@ -2,14 +2,14 @@ package MODELO;
 
 public class Sede {
 
-    static int Sede_Id; //Get Setter
+     int Sede_Id; //Get Setter
     String Sede_Nome; //Get Setter
     String Sede_Lider; //Get Setter
     String Sede_Cidade; //Get Setter
     String Sede_Rua; //Get Setter
     int Sede_Numeracao; //Get Setter
 
-        public static int getSede_Id() {
+        public  int getSede_Id() {
             return Sede_Id;
         }
 
