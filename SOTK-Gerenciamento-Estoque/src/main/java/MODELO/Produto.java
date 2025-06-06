@@ -6,7 +6,7 @@ public class Produto {
     double Produto_Valor;
     int Quant_CD;
 
-    public static String getProduto_Id(){
+    public static int getProduto_Id(){
         return Produto_Id;
     }
 

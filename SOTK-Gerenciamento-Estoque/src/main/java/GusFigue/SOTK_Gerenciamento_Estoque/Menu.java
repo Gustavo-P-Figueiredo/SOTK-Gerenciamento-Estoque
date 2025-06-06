@@ -149,23 +149,23 @@ public class Menu {
     // CASE 3
     public static void cadastrarPedido() throws SQLException {
         System.out.println("=== Realizar Pedido ===");
-        System.out.println("Quantidade pedida: ");
+        System.out.print("Quantidade pedida: ");
         int quantidade = scanner.nextInt();
 
-        System.out.println("ID do produto desejado: ");
+        System.out.print("ID do produto desejado: ");
         int prod_id = scanner.nextInt();
 
-        System.out.println("ID da Sede que o pedido será registrado: ");
+        System.out.print("ID da Sede que o pedido será registrado: ");
         int sede_id = scanner.nextInt();
         scanner.nextLine();
 
-        System.out.println("Cidade de entrega: ");
+        System.out.print("Cidade de entrega: ");
         String cidade = scanner.nextLine();
 
-        System.out.println("Rua de entrega: ");
+        System.out.print("Rua de entrega: ");
         String rua = scanner.nextLine();
 
-        System.out.println("Numero de residencia para entrega : ");
+        System.out.print("Numero de residência para entrega: ");
         int numeracao = scanner.nextInt();
 
         Pedido pedido = new Pedido();
@@ -176,9 +176,14 @@ public class Menu {
         pedido.setPedido_Rua(rua);
         pedido.setPedido_numeracao(numeracao);
 
-        System.out.println("Pedido realizado com sucesso!");
-        System.out.println("-------------------------------");
+        boolean sucesso = PedidoDAO.cadastrarPedido(pedido);
+        if (sucesso) {
+            System.out.println("Pedido realizado com sucesso!");
+        } else {
+            System.out.println("Falha ao realizar o pedido.");
+        }
     }
+
 
     // CASE 4
     public static void registrarVenda() {

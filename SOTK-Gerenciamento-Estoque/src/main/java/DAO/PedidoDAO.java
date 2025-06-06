@@ -24,71 +24,78 @@ public class PedidoDAO {
         }
     }
 
-    // Método para cadastrar um pedido e atualizar o estoque do produto no centro de distribuição (CD)
     public static boolean cadastrarPedido(Pedido pedido) {
-        // SQL para consultar o estoque atual no CD
         String sqlEstoque = "SELECT Quant_CD FROM tb_produto WHERE Prod_id = ?";
-        // SQL para atualizar o estoque no CD (diminuir a quantidade)
         String sqlUpdateEstoque = "UPDATE tb_produto SET Quant_CD = Quant_CD - ? WHERE Prod_id = ?";
-        // SQL para inserir o pedido na tabela de pedidos
-        String sqlInserirPedido = "INSERT INTO tb_pedido (prod_id, quantidade, sede_id, data_pedido) VALUES (?, ?, ?, NOW())";
+        String sqlInserirPedido = "INSERT INTO tb_pedido (prod_id, pedido_quant, sede_id, pedido_data) VALUES (?, ?, ?, NOW())";
 
-        // Abre a conexão com o banco
+        System.out.println("Iniciando cadastro de pedido: " + pedido.toString()); // Adicione toString() à classe Pedido
+
         try (Connection conn = ConexaoMySQL.getConexaoMySQL()) {
-            conn.setAutoCommit(false); // Inicia a transação manualmente
+            conn.setAutoCommit(false);
+            System.out.println("AutoCommit definido como false");
 
             try (
                     PreparedStatement psEstoque = conn.prepareStatement(sqlEstoque);
                     PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateEstoque);
                     PreparedStatement psPedido = conn.prepareStatement(sqlInserirPedido);
             ) {
-                // 1. Verifica o estoque atual do produto no CD
+                // Verificar estoque
                 psEstoque.setInt(1, pedido.getProduto_Id());
                 ResultSet rs = psEstoque.executeQuery();
 
                 if (!rs.next()) {
-                    System.out.println("Produto com ID " + pedido.getProduto_Id() + " não encontrado no estoque do CD. Fale com o time de compras.");
-                    conn.rollback(); // Desfaz qualquer operação
+                    System.out.println("Produto com ID " + pedido.getProduto_Id() + " não encontrado.");
+                    conn.rollback();
                     return false;
                 }
 
                 int estoqueAtual = rs.getInt("Quant_CD");
+                System.out.println("Estoque atual: " + estoqueAtual);
 
                 if (estoqueAtual < pedido.getPedido_Quant()) {
-                    System.out.println("Estoque insuficiente no CD para o produto ID: " + pedido.getProduto_Id() +
-                            ". Disponível: " + estoqueAtual + ", Solicitado: " + pedido.getPedido_Quant());
-                    conn.rollback(); // Desfaz qualquer operação
+                    System.out.println("Estoque insuficiente: disponível " + estoqueAtual +
+                            ", solicitado " + pedido.getPedido_Quant());
+                    conn.rollback();
                     return false;
                 }
 
-                // 2. Atualiza o estoque no CD (retira a quantidade do pedido)
+                // Atualizar estoque
                 psUpdate.setInt(1, pedido.getPedido_Quant());
                 psUpdate.setInt(2, pedido.getProduto_Id());
-                psUpdate.executeUpdate();
+                System.out.println("Executando: " + sqlUpdateEstoque.replace("?", pedido.getPedido_Quant() + "")
+                        .replace("?", pedido.getProduto_Id() + ""));
 
-                // 3. Insere o pedido na tabela de pedidos
+                int afetadas = psUpdate.executeUpdate();
+                System.out.println("Linhas afetadas na atualização: " + afetadas);
+
+                if (afetadas == 0) {
+                    System.out.println("Falha ao atualizar o estoque.");
+                    conn.rollback();
+                    return false;
+                }
+
+                // Inserir pedido
                 psPedido.setInt(1, pedido.getProduto_Id());
                 psPedido.setInt(2, pedido.getPedido_Quant());
                 psPedido.setInt(3, pedido.getSede_Id());
                 psPedido.executeUpdate();
 
-                conn.commit(); // Confirma todas as operações no banco
-                System.out.println("Pedido cadastrado com sucesso!");
+                conn.commit();
+                System.out.println("Pedido cadastrado com sucesso e estoque atualizado!");
                 return true;
 
             } catch (SQLException e) {
-                conn.rollback(); // Se der erro, desfaz tudo
-                System.out.println("Erro ao cadastrar pedido. Transação revertida.");
-                e.printStackTrace();
+                System.out.println("Erro na transação: " + e.getMessage());
+                conn.rollback();
                 return false;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Erro na conexão: " + e.getMessage());
             return false;
         }
     }
 
-}
 
     public List<Pedido> pedidoListar() {
         List<Pedido> pedidos = new ArrayList<>();
@@ -119,8 +126,9 @@ public class PedidoDAO {
 
         return pedidos;
     }
-
 }
+
+
 
 
 

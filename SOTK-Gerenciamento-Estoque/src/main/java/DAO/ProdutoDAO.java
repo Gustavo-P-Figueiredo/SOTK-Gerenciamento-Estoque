@@ -60,7 +60,7 @@ public class ProdutoDAO {
         try (Connection conn = ConexaoMySQL.getConexaoMySQL();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, produto.getProduto_Id());
+            stmt.setInt(1, produto.getProduto_Id());
             stmt.executeUpdate();
 
         } catch (SQLException e) {
