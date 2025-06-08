@@ -70,7 +70,21 @@ public class ProdutoDAO {
         return produto;
     }
 
+    public void abastecerCD(Produto produto) {
+        String sql = "UPDATE tb_produto SET Quant_CD = ? WHERE Prod_id = ?";
 
+        try (Connection conn = ConexaoMySQL.getConexaoMySQL();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, produto.getQuant_CD());
+            stmt.setInt(2, produto.getProduto_Id());
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao abastecer Centro de Distribuição.");
+            e.printStackTrace();
+        }
+    }
 
 
 }

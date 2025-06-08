@@ -7,35 +7,40 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StatusDAO {
 
-    public static String consultarStatus(int idPedido) {
-        String status = null;
+    public static List<Pedido> listarStatus() {
+        List<Pedido> statusList = new ArrayList<>();
 
-        String sql = "SELECT status FROM pedido_status WHERE pedido_id = ?";
+        String sql = "SELECT Pedido_Id, Pedido_Status FROM tb_pedido";
 
         try (Connection conn = ConexaoMySQL.getConexaoMySQL();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
-            stmt.setInt(1, idPedido);
-            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                int id = rs.getInt("Pedido_Id");
+                String status = rs.getString("Pedido_Status");
 
-            if (rs.next()) {
-                status = rs.getString("status");
-            } else {
-                System.out.println("Pedido não encontrado.");
+                Pedido pedido = new Pedido();
+                pedido.setPedido_Id(id);
+                pedido.setPedido_Status(status);
+                statusList.add(pedido);
             }
 
         } catch (SQLException e) {
-            System.out.println("Erro ao consultar status do pedido: " + e.getMessage());
+            System.out.println("Erro ao listar status dos pedidos: " + e.getMessage());
         }
-
-        return status;
+        return statusList;
     }
 
+
+
     public static boolean alterarStatus(Pedido pedido) {
-        String sql = "UPDATE pedido_status SET status = ? WHERE pedido_id = ?";
+        String sql = "UPDATE tb_pedido SET Pedido_Status = ? WHERE pedido_id = ?";
 
         try (Connection conn = ConexaoMySQL.getConexaoMySQL();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

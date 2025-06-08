@@ -12,14 +12,15 @@ import java.util.List;
 
 public class EstoqueDAO {
 
-    public static List<Estoque> consultarEstoquePorSede(int sedeId) {
+    public static List<Estoque> consultarEstoque(int sedeId) {
         List<Estoque> lista = new ArrayList<>();
 
         String sql = """
-                SELECT p.Prod_nome, e.quantidade
-                FROM tb_estoque e
-                JOIN tb_produto p ON e.Prod_id = p.Prod_id
-                WHERE e.Sede_id = ?
+                SELECT p.Prod_nome, SUM(pe.pedido_quant) AS quantidade
+                FROM tb_pedido pe
+                JOIN tb_produto p ON pe.prod_id = p.Prod_id
+                WHERE pe.sede_id = ?
+                GROUP BY p.Prod_nome;
                 """;
 
         try (Connection conn = ConexaoMySQL.getConexaoMySQL();

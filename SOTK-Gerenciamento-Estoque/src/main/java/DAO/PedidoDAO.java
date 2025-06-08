@@ -13,6 +13,8 @@ import java.util.List;
 
 
 public class PedidoDAO {
+    public static int getPedidoID;
+
     public static boolean sedeExiste(int sedeId) throws SQLException {
         String sql = "SELECT 1 FROM tb_sede WHERE Sede_id = ?";
         try (Connection conn = ConexaoMySQL.getConexaoMySQL();
@@ -27,13 +29,12 @@ public class PedidoDAO {
     public static boolean cadastrarPedido(Pedido pedido) {
         String sqlEstoque = "SELECT Quant_CD FROM tb_produto WHERE Prod_id = ?";
         String sqlUpdateEstoque = "UPDATE tb_produto SET Quant_CD = Quant_CD - ? WHERE Prod_id = ?";
-        String sqlInserirPedido = "INSERT INTO tb_pedido (prod_id, pedido_quant, sede_id, pedido_data) VALUES (?, ?, ?, NOW())";
-
-        System.out.println("Iniciando cadastro de pedido: " + pedido.toString()); // Adicione toString() à classe Pedido
+        String sqlInserirPedido = "INSERT INTO tb_pedido " +
+                "(prod_id, pedido_quant, sede_id, pedido_data, Pedido_Cidade, Pedido_rua, Pedido_numero, Pedido_Status) " +
+                "VALUES (?, ?, ?, NOW(), ?, ?, ?, 'Integrado')";
 
         try (Connection conn = ConexaoMySQL.getConexaoMySQL()) {
             conn.setAutoCommit(false);
-            System.out.println("AutoCommit definido como false");
 
             try (
                     PreparedStatement psEstoque = conn.prepareStatement(sqlEstoque);
@@ -55,7 +56,7 @@ public class PedidoDAO {
 
                 if (estoqueAtual < pedido.getPedido_Quant()) {
                     System.out.println("Estoque insuficiente: disponível " + estoqueAtual +
-                            ", solicitado " + pedido.getPedido_Quant());
+                            ", solicitado " + pedido.getPedido_Quant() + " Acione o time de compras");
                     conn.rollback();
                     return false;
                 }
@@ -79,6 +80,10 @@ public class PedidoDAO {
                 psPedido.setInt(1, pedido.getProduto_Id());
                 psPedido.setInt(2, pedido.getPedido_Quant());
                 psPedido.setInt(3, pedido.getSede_Id());
+                psPedido.setString(4, pedido.getPedido_Cidade());
+                psPedido.setString(5, pedido.getPedido_Rua());
+                psPedido.setInt(6, pedido.getPedido_numeracao());
+
                 psPedido.executeUpdate();
 
                 conn.commit();

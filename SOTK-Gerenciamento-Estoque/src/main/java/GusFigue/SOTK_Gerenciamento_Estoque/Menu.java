@@ -2,10 +2,8 @@ package GusFigue.SOTK_Gerenciamento_Estoque;
 
 import DAO.*;
 import MODELO.*;
-import jdk.jshell.Snippet;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -23,16 +21,18 @@ public class Menu {
 
         do {
             System.out.println("===== MENU SOTK =====");
-            System.out.println("1. Cadastrar Produto"); //DONE CHECK FUNCIONAL
-            System.out.println("2. Cadastrar Sede"); // DONE CHECK FUNCIONAL
-            System.out.println("3. Realizar Pedido"); // DONE CHECK FUNCIONAL
-            System.out.println("4. Registrar Venda"); // DONE CHECK FUNCIONAL
-            System.out.println("5. Consultar Estoque"); //DONE CHECK FUNCIONAL
-            System.out.println("6. Listar Produtos"); //DONE CHECK FUNCIONAL
-            System.out.println("7. Listar Sedes"); //DONE CHECK FUNCIONAL
-            System.out.println("8. Listar Pedidos"); //DONE CHECK FUNCIONAL
-            System.out.println("9. Consultar Status de pedido"); //DONE
-            System.out.println("10. sair");
+            System.out.println("1. Cadastrar Produto"); //DONE CHECK
+            System.out.println("2. Cadastrar Sede"); // DONE CHECK
+            System.out.println("3. Realizar Pedido"); // DONE CHECK
+            System.out.println("4. Registrar Venda"); // DONE CHECK
+            System.out.println("5. Consultar Estoque"); //DONE CHECK
+            System.out.println("6. Listar Produtos"); //DONE CHECK
+            System.out.println("7. Listar Sedes"); //DONE CHECK
+            System.out.println("8. Listar Pedidos"); //DONE CHECK
+            System.out.println("9. Consultar Status de pedido"); //DONE CHECK
+            System.out.println("10. Alterar Status de pedido"); //DONE CHECK
+            System.out.println("11. Abastecer Centro de Distribuição");
+            System.out.println("12. Sair...");
             System.out.print("Escolha uma opção: ");
 
             while (!scanner.hasNextInt()) {
@@ -74,13 +74,16 @@ public class Menu {
                     alterarStatus();
                     break;
                 case 11:
+                    abastecerCD();
+                    break;
+                case 12:
                     System.out.println("Encerrando...");
                     break;
                 default:
                     System.out.println("Opção inválida. Tente novamente.");
             }
 
-        } while (opcao != 11);
+        } while (opcao != 12);
     }
 
 
@@ -218,7 +221,7 @@ public class Menu {
         int sedeId = scanner.nextInt();
         scanner.nextLine();
 
-        List<Estoque> estoqueList = EstoqueDAO.consultarEstoquePorSede(sedeId);
+        List<Estoque> estoqueList = EstoqueDAO.consultarEstoque(sedeId);
 
         if (estoqueList.isEmpty()) {
             System.out.println("Nenhum produto encontrado para esta sede.");
@@ -238,7 +241,7 @@ public class Menu {
             System.out.println("ID: " + produto.getProduto_Id());
             System.out.println("Nome: " + produto.getProduto_Nome());
             System.out.println("Valor: R$ " + produto.getProduto_Valor());
-            System.out.println("Quantidade disponivel para pedido: " + produto.getQuant_CD());
+        System.out.println("Quantidade disponivel para pedido: " + produto.getQuant_CD());
             System.out.println("-------------------------------");
         }
     }
@@ -275,19 +278,18 @@ public class Menu {
 
     // CASE 9
     public static void consultarStatus() {
-        System.out.println("Digite o ID do pedido: ");
-        int idPedido = scanner.nextInt();
+        List<Pedido> pedidos = StatusDAO.listarStatus();
 
-        String status = StatusDAO.consultarStatus(idPedido);
-
-        if (status != null) {
-            System.out.println("Status do pedido: " + status);
-        } else {
-            System.out.println("Pedido não encontrado.");
+        System.out.println("=== Lista de Pedidos e seus Status ===");
+        for (Pedido pedido : pedidos) {
+            System.out.println("Pedido ID: " + pedido.getPedido_Id());
+            System.out.println("Status: " + pedido.getPedido_Status());
+            System.out.println("--------------------------");
         }
     }
 
-    // CASE 10
+
+        // CASE 10
     public static void alterarStatus() {
         System.out.println("Digite o ID do pedido para atualizar o status:");
         int Pedido_id = scanner.nextInt();
@@ -307,6 +309,23 @@ public class Menu {
         } else {
             System.out.println("Erro ao atualizar o status.");
         }
+    }
+
+        // CASE 11
+    public static void abastecerCD() {
+        System.out.println("Informe o ID do produto que deve ser reabastecido: ");
+        int Prod_Id = scanner.nextInt();
+
+        System.out.println("Informe a quantidade para o reabastecimento: ");
+        int quant_CD = scanner.nextInt();
+
+        Produto produto = new Produto();
+        produto.setQuant_CD(quant_CD);
+        produto.setProduto_Id(Prod_Id);
+
+        produtoDAO.abastecerCD(produto);
+        System.out.println("Produto cadastrado com sucesso!");
+        System.out.println("-------------------------------");
     }
 }
 

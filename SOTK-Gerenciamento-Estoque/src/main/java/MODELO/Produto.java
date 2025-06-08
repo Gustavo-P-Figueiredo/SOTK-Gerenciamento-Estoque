@@ -1,12 +1,12 @@
 package MODELO;
 
 public class Produto {
-    static int Produto_Id;
+    int Produto_Id;
     String Produto_Nome;
     double Produto_Valor;
     int Quant_CD;
 
-    public static int getProduto_Id(){
+    public int getProduto_Id(){
         return Produto_Id;
     }
 
