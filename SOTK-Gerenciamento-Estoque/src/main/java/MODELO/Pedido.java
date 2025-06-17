@@ -3,9 +3,6 @@ package MODELO;
 import java.sql.Date;
 
 public class Pedido {
-    public static int quant;
-    public static String getPedido_Status;
-    public static int getPedido_id;
     int Pedido_Id;
     Date Pedido_Data;
     int Pedido_Quant;

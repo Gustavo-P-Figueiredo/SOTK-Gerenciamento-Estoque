@@ -2,7 +2,10 @@ package GusFigue.SOTK_Gerenciamento_Estoque;
 
 import DAO.*;
 import MODELO.*;
+import Controller.*;
+import com.sun.net.httpserver.HttpServer;
 
+import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +19,7 @@ public class Menu {
     private static final PedidoDAO pedidoDAO = new PedidoDAO();
 
 
-    public static void main(String[] args) throws SQLException {
+   public static void main(String[] args) throws SQLException {
         int opcao;
 
         do {
@@ -79,10 +82,10 @@ public class Menu {
                 case 12:
                     System.out.println("Encerrando...");
                     break;
+
                 default:
                     System.out.println("Opção inválida. Tente novamente.");
             }
-
         } while (opcao != 12);
     }
 
@@ -235,7 +238,7 @@ public class Menu {
     }
 
     // CASE 6
-    private static void produtoLista() {
+    public static void produtoLista() {
         System.out.println("=== Lista de Produtos Cadastrados ===");
         for (Produto produto : produtoDAO.listar()) {
             System.out.println("ID: " + produto.getProduto_Id());
@@ -261,7 +264,7 @@ public class Menu {
     }
 
     // CASE 8
-    private static void pedidoLista() {
+    public static void pedidoLista() {
         System.out.println("=== Lista de Pedidos solicitados ===");
         for (Pedido pedido : pedidoDAO.pedidoListar()) {
             System.out.println("ID do pedido: " + pedido.getPedido_Id());
