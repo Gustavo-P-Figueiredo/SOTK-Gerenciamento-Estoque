@@ -1,13 +1,13 @@
 package MODELO;
 
 public class Cliente {
-    int Cliente_Id;
-    String Cliente_Nome;
-    String Cliente_Cpf;
-    String Cliente_Tel;
-    String Cliente_Cidade;
-    String Cliente_Rua;
-    String Cliente_Numeracao;
+    private int Cliente_Id;
+    private String Cliente_Nome;
+    private String Cliente_Cpf;
+    private String Cliente_Tel;
+    private String Cliente_Cidade;
+    private String Cliente_Rua;
+    private int Cliente_Numeracao;
 
     public int getCliente_Id() {
         return Cliente_Id;
@@ -57,11 +57,11 @@ public class Cliente {
         Cliente_Rua = cliente_Rua;
     }
 
-    public String getCliente_Numeracao() {
+    public int getCliente_Numeracao() {
         return Cliente_Numeracao;
     }
 
-    public void setCliente_Numeracao(String cliente_Numeracao) {
+    public void setCliente_Numeracao(int cliente_Numeracao) {
         Cliente_Numeracao = cliente_Numeracao;
     }
 }

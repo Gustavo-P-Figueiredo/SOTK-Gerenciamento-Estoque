@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static GusFigue.SOTK_Gerenciamento_Estoque.Menu.*;
+
 public class MenuGUI {
 
     private static final ProdutoDAO produtoDAO = new ProdutoDAO();
@@ -23,7 +25,7 @@ public class MenuGUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 800);
         frame.getContentPane().setBackground(new Color(135, 206, 250));
-        frame.setLayout(new GridLayout(6, 2, 17, 17));
+        frame.setLayout(new GridLayout(8, 2, 17, 17));
 
         // Criando botões para cada opção do menu
         String[] options = {
@@ -38,7 +40,11 @@ public class MenuGUI {
                 "9. Consultar Status de Pedido",
                 "10. Alterar Status de Pedido",
                 "11. Abastecer CD",
-                "12. Sair"
+                "12. Cadastrar Cliente",
+                "13. Listar Clientes",
+                "14. Cadastrar Fornecedor",
+                "15. Listar Fornecedores",
+                "16. Sair "
         };
 
         for (String option : options) {
@@ -87,7 +93,19 @@ public class MenuGUI {
                 case "11. Abastecer CD":
                     abastecerCD();
                     break;
-                case "12. Sair":
+                case "12. Cadastrar Cliente":
+                    CadastrarCliente();
+                    break;
+                case "13. Listar Clientes":
+                    listarCliente();
+                    break;
+                case "14. Cadastrar Fornecedor":
+                    CadastrarFornecedor();
+                    break;
+                case "15. Listar Fornecedores":
+                    listarFornecedor();
+                    break;
+                case "16. Sair":
                     System.exit(0);
                     break;
                 default:
@@ -307,4 +325,103 @@ public class MenuGUI {
             JOptionPane.showMessageDialog(null, "Dados inválidos.");
         }
     }
+
+    private static void CadastrarCliente() {
+        String nome = JOptionPane.showInputDialog("Nome do Cliente:");
+        String cpf = JOptionPane.showInputDialog("CPF do Cliente:");
+        String telefone = JOptionPane.showInputDialog("Telefone do Cliente:");
+        String cidade = JOptionPane.showInputDialog("Cidade:");
+        String rua = JOptionPane.showInputDialog("Rua:");
+        String numStr = JOptionPane.showInputDialog("Número da residência:");
+
+        if (nome == null || cpf == null || telefone == null || cidade == null || rua == null || numStr == null) {
+            JOptionPane.showMessageDialog(null, "Cadastro cancelado.");
+            return;
+        }
+
+        try {
+            int numero = Integer.parseInt(numStr);
+
+            Cliente cliente = new Cliente();
+            cliente.setCliente_Nome(nome);
+            cliente.setCliente_Cpf(cpf);
+            cliente.setCliente_Tel(telefone);
+            cliente.setCliente_Cidade(cidade);
+            cliente.setCliente_Rua(rua);
+            cliente.setCliente_Numeracao(numero);
+
+            boolean sucesso = ClienteDAO.CadastrarCliente(cliente);
+
+            if (sucesso) {
+                JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso!");
+            } else {
+                JOptionPane.showMessageDialog(null, "Erro ao cadastrar cliente.");
+            }
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Número inválido.");
+        }
+    }
+
+    private static void listarCliente() {
+        List<Cliente> clientes = ClienteDAO.listarCliente();
+
+        StringBuilder sb = new StringBuilder("Clientes Cadastrados:\n");
+        for (Cliente cliente : clientes) {
+            sb.append("ID: ").append(cliente.getCliente_Id())
+                    .append(", Nome: ").append(cliente.getCliente_Nome())
+                    .append(", CPF: ").append(cliente.getCliente_Cpf())
+                    .append(", Telefone: ").append(cliente.getCliente_Tel())
+                    .append("\n");
+        }
+
+        JOptionPane.showMessageDialog(null, sb.length() > 0 ? sb.toString() : "Nenhum cliente encontrado.");
+    }
+
+    private static void CadastrarFornecedor() {
+        String nome = JOptionPane.showInputDialog("Nome do Fornecedor:");
+        String cnpj = JOptionPane.showInputDialog("CNPJ do Fornecedor:");
+        String catalogo = JOptionPane.showInputDialog("Catalogo do Fornecedor:");
+
+        if (nome == null || cnpj == null || catalogo == null) {
+            JOptionPane.showMessageDialog(null, "Cadastro cancelado.");
+            return;
+        }
+
+        try {
+            Fornecedor fornecedor = new Fornecedor();
+            fornecedor.setFornecedor_Nome(nome);
+            fornecedor.setFornecedor_Cnpj(cnpj);
+            fornecedor.setFornecedor_Catalogo(catalogo);
+
+            boolean sucesso = FornecedorDAO.CadastrarFornecedor(fornecedor);
+
+            if (sucesso) {
+                JOptionPane.showMessageDialog(null, "Fornecedor cadastrado com sucesso!");
+            } else {
+                JOptionPane.showMessageDialog(null, "Falha ao cadastrar fornecedor.");
+            }
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Número inválido.");
+        }
+    }
+
+
+    private static void listarFornecedor() {
+        List<Fornecedor> fornecedores = FornecedorDAO.listarFornecedor();
+
+        StringBuilder sb = new StringBuilder("Fornecedores Cadastrados:\n");
+        for (Fornecedor fornecedor : fornecedores) {
+            sb.append("ID: ").append(fornecedor.getFornecedor_Id())
+                    .append(", Nome: ").append(fornecedor.getFornecedor_Nome())
+                    .append(", CNPJ: ").append(fornecedor.getFornecedor_Cnpj())
+                    .append(", Catalogo: ").append(fornecedor.getFornecedor_Catalogo())
+                    .append("\n");
+        }
+
+        JOptionPane.showMessageDialog(null, sb.length() > 0 ? sb.toString() : "Nenhum fornecedor encontrado.");
+    }
+
+
 }

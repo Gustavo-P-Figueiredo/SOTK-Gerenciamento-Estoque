@@ -1,6 +1,7 @@
 package MODELO;
 
 public class Fornecedor {
+    public static String getFornecedor_Catalogo;
     int Fornecedor_Id;
     String Fornecedor_Nome;
     String Fornecedor_Cnpj;

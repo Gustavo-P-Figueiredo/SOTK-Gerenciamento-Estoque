@@ -2,14 +2,12 @@ package GusFigue.SOTK_Gerenciamento_Estoque;
 
 import DAO.*;
 import MODELO.*;
-import Controller.*;
-import com.sun.net.httpserver.HttpServer;
 
-import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
 
 
 public class Menu {
@@ -19,7 +17,7 @@ public class Menu {
     private static final PedidoDAO pedidoDAO = new PedidoDAO();
 
 
-   public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) throws SQLException {
         int opcao;
 
         do {
@@ -35,7 +33,12 @@ public class Menu {
             System.out.println("9. Consultar Status de pedido"); //DONE CHECK
             System.out.println("10. Alterar Status de pedido"); //DONE CHECK
             System.out.println("11. Abastecer Centro de Distribuição");
-            System.out.println("12. Sair...");
+            System.out.println("12. Cadastrar Clientes");
+            System.out.println("13. Listar Clientes");
+            System.out.println("14. Cadastrar Fornecedores");
+            System.out.println("15. Listar Fornecedores");
+            System.out.println("16. Sair ");
+
             System.out.print("Escolha uma opção: ");
 
             while (!scanner.hasNextInt()) {
@@ -80,13 +83,24 @@ public class Menu {
                     abastecerCD();
                     break;
                 case 12:
+                    CadastrarCliente();
+                    break;
+                case 13:
+                    listarCliente();
+                    break;
+                case 14:
+                    CadastrarFornecedor();
+                    break;
+                case 15:
+                    listarFornecedor();
+                    break;
+                case 16:
                     System.out.println("Encerrando...");
                     break;
-
                 default:
                     System.out.println("Opção inválida. Tente novamente.");
             }
-        } while (opcao != 12);
+        } while (opcao != 16);
     }
 
 
@@ -244,7 +258,7 @@ public class Menu {
             System.out.println("ID: " + produto.getProduto_Id());
             System.out.println("Nome: " + produto.getProduto_Nome());
             System.out.println("Valor: R$ " + produto.getProduto_Valor());
-        System.out.println("Quantidade disponivel para pedido: " + produto.getQuant_CD());
+            System.out.println("Quantidade disponivel para pedido: " + produto.getQuant_CD());
             System.out.println("-------------------------------");
         }
     }
@@ -292,7 +306,7 @@ public class Menu {
     }
 
 
-        // CASE 10
+    // CASE 10
     public static void alterarStatus() {
         System.out.println("Digite o ID do pedido para atualizar o status:");
         int Pedido_id = scanner.nextInt();
@@ -314,7 +328,7 @@ public class Menu {
         }
     }
 
-        // CASE 11
+    // CASE 11
     public static void abastecerCD() {
         System.out.println("Informe o ID do produto que deve ser reabastecido: ");
         int Prod_Id = scanner.nextInt();
@@ -329,6 +343,102 @@ public class Menu {
         produtoDAO.abastecerCD(produto);
         System.out.println("Produto cadastrado com sucesso!");
         System.out.println("-------------------------------");
+    }
+
+    // CASE 12
+    public static void CadastrarCliente() {
+        System.out.println("=== Cadastrar Cliente ===");
+
+        System.out.print("Nome do Cliente: ");
+        String nome = scanner.nextLine();
+
+        System.out.print("CPF do cliente: ");  //22222222223
+        String cpf = scanner.nextLine();
+
+        System.out.print("Telefone do cliente: "); //2298200412
+        String tel = scanner.nextLine();
+
+        System.out.print("Cidade do cliente: ");
+        String cidade = scanner.nextLine();
+
+        System.out.print("Rua do cliente: ");
+        String rua = scanner.nextLine();
+
+        System.out.print("Numero de residência do cliente: ");
+        int numeracao = scanner.nextInt();
+
+        Cliente cliente = new Cliente();
+        cliente.setCliente_Nome(nome);
+        cliente.setCliente_Cpf(cpf);
+        cliente.setCliente_Tel(tel);
+        cliente.setCliente_Cidade(cidade);
+        cliente.setCliente_Rua(rua);
+        cliente.setCliente_Numeracao(numeracao);
+
+        boolean cadastrado = ClienteDAO.CadastrarCliente(cliente);
+        if(cadastrado) {
+            System.out.println("Cliente cadastrado com sucesso!");
+        } else {
+            System.out.println("Falha ao cadastrar cliente.");
+        }
+    }
+
+    //CASE 13
+    public static void listarCliente() {
+        List<Cliente> clientes = ClienteDAO.listarCliente();
+        System.out.println("=== Lista de Clientes ===");
+        for (Cliente cliente : clientes) {
+            System.out.println("ID: " + cliente.getCliente_Id());
+            System.out.println("Nome: " + cliente.getCliente_Nome());
+            System.out.println("CPF: " + cliente.getCliente_Cpf());
+            System.out.println("Telefone: " + cliente.getCliente_Tel());
+            System.out.println("Cidade: " + cliente.getCliente_Cidade());
+            System.out.println("Rua: " + cliente.getCliente_Rua());
+            System.out.println("Numeração: " + cliente.getCliente_Numeracao());
+
+            System.out.println("--------------------------");
+        }
+    }
+
+    //CASE 14
+    public static void CadastrarFornecedor() {
+        System.out.println("=== Cadastrar Fornecedor ===");
+        System.out.print("Nome do Fornecedor: ");
+        String nome = scanner.nextLine();
+
+        System.out.print("CNPJ do Fornecedor: "); // Exemplo: 111111111115
+        String cnpj = scanner.nextLine();
+
+        System.out.print("Catálogo do Fornecedor: "); // Exemplo: Pigmento Branco, Amarelo
+        String catalogo = scanner.nextLine();
+
+        Fornecedor fornecedor = new Fornecedor();
+        fornecedor.setFornecedor_Nome(nome);
+        fornecedor.setFornecedor_Cnpj(cnpj);
+        fornecedor.setFornecedor_Catalogo(catalogo);
+
+        boolean cadastrado = FornecedorDAO.CadastrarFornecedor(fornecedor);
+        if (cadastrado) {
+            System.out.println("Fornecedor cadastrado com sucesso!");
+        } else {
+            System.out.println("Falha ao cadastrar fornecedor.");
+        }
+    }
+
+
+    //CASE 15
+    public static void listarFornecedor() {
+        System.out.println("=== Lista de Fornecedores ===");
+        List<Fornecedor> fornecedores = FornecedorDAO.listarFornecedor();
+
+        for (Fornecedor fornecedor : fornecedores) {
+            System.out.println("ID: " + (fornecedor.getFornecedor_Id()));
+            System.out.println("Nome: " + (fornecedor.getFornecedor_Nome()));
+            System.out.println("CNPJ: " + (fornecedor.getFornecedor_Cnpj()));
+            System.out.println("Catalogo: " + (fornecedor.getFornecedor_Catalogo()));
+
+            System.out.println("--------------------------");
+        }
     }
 }
 
