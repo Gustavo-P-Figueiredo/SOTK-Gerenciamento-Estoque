@@ -1,427 +1,531 @@
-
 package GusFigue.SOTK_Gerenciamento_Estoque;
 
 import DAO.*;
 import MODELO.*;
 import javax.swing.*;
 import java.awt.*;
-import java.sql.SQLException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import static GusFigue.SOTK_Gerenciamento_Estoque.Menu.*;
-
 public class MenuGUI {
+    private JFrame frame;
+    private JList<String> navList;
+    private DefaultListModel<String> navModel;
+    private JTabbedPane tabbedPane;
 
-    private static final ProdutoDAO produtoDAO = new ProdutoDAO();
-    private static final PedidoDAO pedidoDAO = new PedidoDAO();
+    // DAOs
+    private final ProdutoDAO produtoDAO = new ProdutoDAO();
+    private final SedeDAO sedeDAO = new SedeDAO();
+    private final PedidoDAO pedidoDAO = new PedidoDAO();
+    private final VendaDAO vendaDAO = new VendaDAO();
+    private final EstoqueDAO estoqueDAO = new EstoqueDAO();
+    private final StatusDAO statusDAO = new StatusDAO();
+    private final ClienteDAO clienteDAO = new ClienteDAO();
+    private final FornecedorDAO fornecedorDAO = new FornecedorDAO();
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(MenuGUI::createAndShowGUI);
+        SwingUtilities.invokeLater(() -> new MenuGUI().init());
     }
 
-    private static void createAndShowGUI() {
-        JFrame frame = new JFrame("Menu SOTK - Gerenciamento de Estoque");
+    private void init() {
+        frame = new JFrame("SOTK - Gerenciamento de Estoque");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 800);
-        frame.getContentPane().setBackground(new Color(135, 206, 250));
-        frame.setLayout(new GridLayout(8, 2, 17, 17));
+        frame.setSize(1000, 600);
 
-        // Criando botões para cada opção do menu
+        // Navegação lateral
+        navModel = new DefaultListModel<>();
+
         String[] options = {
-                "1. Cadastrar Produto",
-                "2. Cadastrar Sede",
-                "3. Realizar Pedido",
-                "4. Registrar Venda",
-                "5. Consultar Estoque",
-                "6. Listar Produtos",
-                "7. Listar Sedes",
-                "8. Listar Pedidos",
-                "9. Consultar Status de Pedido",
-                "10. Alterar Status de Pedido",
-                "11. Abastecer CD",
-                "12. Cadastrar Cliente",
-                "13. Listar Clientes",
-                "14. Cadastrar Fornecedor",
-                "15. Listar Fornecedores",
-                "16. Sair "
+                "Cadastrar Produto", "Listar Produtos", "Cadastrar Sede", "Listar Sedes",
+                "Realizar Pedido", "Listar Pedidos", "Consultar Estoque", "Abastecer CD",
+                "Registrar Venda", "Consultar Status", "Alterar Status", "Cadastrar Cliente",
+                "Listar Clientes", "Cadastrar Fornecedor", "Listar Fornecedores", "Sair"
         };
+        for (String opt : options) navModel.addElement(opt);
+        navList = new JList<>(navModel);
+        navList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        navList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String sel = navList.getSelectedValue();
+                if ("Sair".equals(sel)) System.exit(0);
+                openTab(sel);
+            }
+        });
 
-        for (String option : options) {
-            JButton button = new JButton(option);
-            button.addActionListener(e -> handleOption(option));
-            frame.add(button);
-        }
+        // Painel de abas
+        tabbedPane = new JTabbedPane();
 
+        // Divisor
+        JSplitPane split = new JSplitPane(
+                JSplitPane.HORIZONTAL_SPLIT,
+                new JScrollPane(navList),
+                tabbedPane);
+        split.setDividerLocation(200);
+
+        frame.getContentPane().add(split, BorderLayout.CENTER);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
-    static void handleOption(String option) {
-        try {
-            switch (option) {
-                case "1. Cadastrar Produto":
-                    cadastrarProduto();
-                    break;
-                case "2. Cadastrar Sede":
-                    cadastrarSede();
-                    break;
-                case "3. Realizar Pedido":
-                    cadastrarPedido();
-                    break;
-                case "4. Registrar Venda":
-                    registrarVenda();
-                    break;
-                case "5. Consultar Estoque":
-                    consultarEstoque();
-                    break;
-                case "6. Listar Produtos":
-                    listarProdutos();
-                    break;
-                case "7. Listar Sedes":
-                    listarSedes();
-                    break;
-                case "8. Listar Pedidos":
-                    listarPedidos();
-                    break;
-                case "9. Consultar Status de Pedido":
-                    consultarStatus();
-                    break;
-                case "10. Alterar Status de Pedido":
-                    alterarStatus();
-                    break;
-                case "11. Abastecer CD":
-                    abastecerCD();
-                    break;
-                case "12. Cadastrar Cliente":
-                    CadastrarCliente();
-                    break;
-                case "13. Listar Clientes":
-                    listarCliente();
-                    break;
-                case "14. Cadastrar Fornecedor":
-                    CadastrarFornecedor();
-                    break;
-                case "15. Listar Fornecedores":
-                    listarFornecedor();
-                    break;
-                case "16. Sair":
-                    System.exit(0);
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(null, "Opção inválida!");
+    private void openTab(String option) {
+        // Seleciona se já aberto
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            if (tabbedPane.getTitleAt(i).equals(option)) {
+                tabbedPane.setSelectedIndex(i);
+                return;
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Erro: " + e.getMessage());
         }
+
+        JPanel panel;
+        switch (option) {
+            case "Cadastrar Produto":
+                panel = buildCadastrarProdutoPanel();
+                break;
+            case "Listar Produtos":
+                panel = buildListarProdutosPanel();
+                break;
+            case "Cadastrar Sede":
+                panel = buildCadastrarSedePanel();
+                break;
+            case "Listar Sedes":
+                panel = buildListarSedesPanel();
+                break;
+            case "Realizar Pedido":
+                panel = buildRealizarPedidoPanel();
+                break;
+            case "Listar Pedidos":
+                panel = buildListarPedidosPanel();
+                break;
+            case "Consultar Estoque":
+                panel = buildConsultarEstoquePanel();
+                break;
+            case "Abastecer CD":
+                panel = buildAbastecerCDPanel();
+                break;
+            case "Registrar Venda":
+                panel = buildRegistrarVendaPanel();
+                break;
+            case "Consultar Status":
+                panel = buildConsultarStatusPanel();
+                break;
+            case "Alterar Status":
+                panel = buildAlterarStatusPanel();
+                break;
+            case "Cadastrar Cliente":
+                panel = buildCadastrarClientePanel();
+                break;
+            case "Listar Clientes":
+                panel = buildListarClientesPanel();
+                break;
+            case "Cadastrar Fornecedor":
+                panel = buildCadastrarFornecedorPanel();
+                break;
+            case "Listar Fornecedores":
+                panel = buildListarFornecedoresPanel();
+                break;
+            default:
+                panel = new JPanel();
+                panel.add(new JLabel("Opção não implementada."));
+        }
+
+        tabbedPane.addTab(option, panel);
+        tabbedPane.setSelectedComponent(panel);
     }
 
-    // Exemplo de um dos métodos GUI (ex: cadastrarProduto)
-    private static void cadastrarProduto() {
-        String nome = JOptionPane.showInputDialog("Nome do Produto:");
-        if (nome == null) return;
+    // Panels de cada funcionalidade
+    private JPanel buildCadastrarProdutoPanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField nomeF = new JTextField(20);
+        JTextField valorF = new JTextField(10);
+        JTextField quantF = new JTextField(5);
 
-        String valorStr = JOptionPane.showInputDialog("Valor do Produto:");
-        if (valorStr == null) return;
-
-        String quantStr = JOptionPane.showInputDialog("Quantidade no CD:");
-        if (quantStr == null) return;
-
-        try {
-            double valor = Double.parseDouble(valorStr.replace(",", "."));
-            int quant = Integer.parseInt(quantStr);
-
-            Produto produto = new Produto();
-            produto.setProduto_Nome(nome);
-            produto.setProduto_Valor(valor);
-            produto.setQuant_CD(quant);
-
-            produtoDAO.cadastrar(produto);
-            JOptionPane.showMessageDialog(null, "Produto cadastrado com sucesso!");
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Dados inválidos. Tente novamente.");
-        }
-    }
-
-    private static void cadastrarSede() {
-        try {
-            String nome = JOptionPane.showInputDialog("Nome da Sede:");
-            String lider = JOptionPane.showInputDialog("Líder da Sede:");
-            String cidade = JOptionPane.showInputDialog("Cidade:");
-            String rua = JOptionPane.showInputDialog("Rua:");
-            String numStr = JOptionPane.showInputDialog("Número da residência:");
-
-            if (nome == null || lider == null || cidade == null || rua == null || numStr == null) return;
-
-            int numeracao = Integer.parseInt(numStr);
-
-            Sede sede = new Sede();
-            sede.setSede_Nome(nome);
-            sede.setSede_Lider(lider);
-            sede.setSede_Cidade(cidade);
-            sede.setSede_Rua(rua);
-            sede.setSede_Numeracao(numeracao);
-
-            SedeDAO.cadastrarSede(sede);
-            JOptionPane.showMessageDialog(null, "Sede cadastrada com sucesso!");
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Número inválido.");
-        }
-    }
-
-    private static void cadastrarPedido() throws SQLException {
-        try {
-            int quantidade = Integer.parseInt(JOptionPane.showInputDialog("Quantidade:"));
-            int prod_id = Integer.parseInt(JOptionPane.showInputDialog("ID do Produto:"));
-            int sede_id = Integer.parseInt(JOptionPane.showInputDialog("ID da Sede:"));
-            String cidade = JOptionPane.showInputDialog("Cidade de Entrega:");
-            String rua = JOptionPane.showInputDialog("Rua de Entrega:");
-            int numero = Integer.parseInt(JOptionPane.showInputDialog("Número da residência:"));
-
-            Pedido pedido = new Pedido();
-            pedido.setPedido_Quant(quantidade);
-            pedido.setProduto_Id(prod_id);
-            pedido.setSede_Id(sede_id);
-            pedido.setPedido_Cidade(cidade);
-            pedido.setPedido_Rua(rua);
-            pedido.setPedido_numeracao(numero);
-
-            boolean sucesso = PedidoDAO.cadastrarPedido(pedido);
-
-            if (sucesso) {
-                JOptionPane.showMessageDialog(null, "Pedido cadastrado com sucesso!");
-            } else {
-                JOptionPane.showMessageDialog(null, "Falha ao cadastrar pedido.");
+        p.add(new JLabel("Nome:"), gbc);
+        gbc.gridx++; p.add(nomeF, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        p.add(new JLabel("Valor:"), gbc);
+        gbc.gridx++; p.add(valorF, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        p.add(new JLabel("Quantidade CD:"), gbc);
+        gbc.gridx++; p.add(quantF, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        JButton salvar = new JButton("Salvar");
+        salvar.addActionListener(e -> {
+            try {
+                Produto prod = new Produto();
+                prod.setProduto_Nome(nomeF.getText());
+                prod.setProduto_Valor(Double.parseDouble(valorF.getText().replace(",", ".")));
+                prod.setQuant_CD(Integer.parseInt(quantF.getText()));
+                produtoDAO.cadastrar(prod);
+                JOptionPane.showMessageDialog(p, "Produto cadastrado!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(p, "Erro: " + ex.getMessage());
             }
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Dados inválidos.");
-        }
+        });
+        p.add(salvar, gbc);
+        return p;
     }
 
-    private static void registrarVenda() {
-        try {
-            int idSede = Integer.parseInt(JOptionPane.showInputDialog("ID da Sede:"));
-            List<Venda.ItemVenda> itens = new ArrayList<>();
+    private JPanel buildListarProdutosPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (Produto prod : produtoDAO.listar()) {
+            listModel.addElement(
+                    String.format("ID:%d - %s - R$%.2f - Qtd:%d",
+                            prod.getProduto_Id(), prod.getProduto_Nome(),
+                            prod.getProduto_Valor(), prod.getQuant_CD())
+            );
+        }
+        JList<String> list = new JList<>(listModel);
+        p.add(new JScrollPane(list), BorderLayout.CENTER);
+        return p;
+    }
 
-            while (true) {
-                String idProdutoStr = JOptionPane.showInputDialog("ID do Produto (ou 0 para finalizar):");
-                if (idProdutoStr == null) break;
+    private JPanel buildCadastrarSedePanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField nomeF = new JTextField(20);
+        JTextField liderF = new JTextField(20);
+        JTextField cidadeF = new JTextField(15);
+        JTextField ruaF = new JTextField(15);
+        JTextField numF = new JTextField(5);
 
-                int idProduto = Integer.parseInt(idProdutoStr);
-                if (idProduto == 0) break;
-
-                int qtd = Integer.parseInt(JOptionPane.showInputDialog("Quantidade:"));
-                itens.add(new Venda.ItemVenda(idProduto, qtd));
+        p.add(new JLabel("Nome:"), gbc);
+        gbc.gridx++; p.add(nomeF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Líder:"), gbc);
+        gbc.gridx++; p.add(liderF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Cidade:"), gbc);
+        gbc.gridx++; p.add(cidadeF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Rua:"), gbc);
+        gbc.gridx++; p.add(ruaF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Número:"), gbc);
+        gbc.gridx++; p.add(numF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton salvar = new JButton("Salvar");
+        salvar.addActionListener(e -> {
+            try {
+                Sede sede = new Sede();
+                sede.setSede_Nome(nomeF.getText());
+                sede.setSede_Lider(liderF.getText());
+                sede.setSede_Cidade(cidadeF.getText());
+                sede.setSede_Rua(ruaF.getText());
+                sede.setSede_Numeracao(Integer.parseInt(numF.getText()));
+                sedeDAO.cadastrarSede(sede);
+                JOptionPane.showMessageDialog(p, "Sede cadastrada!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(p, "Erro: " + ex.getMessage());
             }
+        });
+        p.add(salvar, gbc);
+        return p;
+    }
 
-            if (!itens.isEmpty()) {
-                new VendaDAO().registrarVenda(idSede, itens);
-                JOptionPane.showMessageDialog(null, "Venda registrada com sucesso!");
-            } else {
-                JOptionPane.showMessageDialog(null, "Nenhum item adicionado.");
+    private JPanel buildListarSedesPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (Sede s : sedeDAO.listar()) {
+            listModel.addElement(
+                    String.format("ID:%d - %s - %s",
+                            s.getSede_Id(), s.getSede_Nome(), s.getSede_Cidade())
+            );
+        }
+        p.add(new JList<>(listModel), BorderLayout.CENTER);
+        return p;
+    }
+
+    private JPanel buildRealizarPedidoPanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField qtdF = new JTextField(5);
+        JTextField prodIdF = new JTextField(5);
+        JTextField sedeIdF = new JTextField(5);
+        JTextField cidadeF = new JTextField(15);
+        JTextField ruaF = new JTextField(15);
+        JTextField numF = new JTextField(5);
+
+        p.add(new JLabel("Quantidade:"), gbc);
+        gbc.gridx++; p.add(qtdF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("ID Produto:"), gbc);
+        gbc.gridx++; p.add(prodIdF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("ID Sede:"), gbc);
+        gbc.gridx++; p.add(sedeIdF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Cidade entrega:"), gbc);
+        gbc.gridx++; p.add(cidadeF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Rua entrega:"), gbc);
+        gbc.gridx++; p.add(ruaF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Número:"), gbc);
+        gbc.gridx++; p.add(numF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton salvar = new JButton("Salvar");
+        salvar.addActionListener(e -> {
+            try {
+                Pedido pedido = new Pedido();
+                pedido.setPedido_Quant(Integer.parseInt(qtdF.getText()));
+                pedido.setProduto_Id(Integer.parseInt(prodIdF.getText()));
+                pedido.setSede_Id(Integer.parseInt(sedeIdF.getText()));
+                pedido.setPedido_Cidade(cidadeF.getText());
+                pedido.setPedido_Rua(ruaF.getText());
+                pedido.setPedido_numeracao(Integer.parseInt(numF.getText()));
+                boolean ok = pedidoDAO.cadastrarPedido(pedido);
+                JOptionPane.showMessageDialog(p, ok ? "Pedido criado!" : "Falha ao criar pedido.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(p, "Erro: " + ex.getMessage());
             }
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Dados inválidos.");
-        }
+        });
+        p.add(salvar, gbc);
+        return p;
     }
 
-    private static void consultarEstoque() {
-        try {
-            int sedeId = Integer.parseInt(JOptionPane.showInputDialog("ID da Sede:"));
-            List<Estoque> estoqueList = EstoqueDAO.consultarEstoque(sedeId);
+    private JPanel buildListarPedidosPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (Pedido pe : pedidoDAO.pedidoListar()) {
+            model.addElement(String.format("ID:%d - Prod:%d - Qtd:%d - St:%s",
+                    pe.getPedido_Id(), pe.getProduto_Id(), pe.getPedido_Quant(), pe.getPedido_Status()));
+        }
+        p.add(new JList<>(model), BorderLayout.CENTER);
+        return p;
+    }
 
-            StringBuilder sb = new StringBuilder("Estoque da Sede " + sedeId + ":\n");
-
-            for (Estoque estoque : estoqueList) {
-                sb.append("Produto: ").append(estoque.getProduto_Nome())
-                        .append(" | Quantidade: ").append(estoque.getQuantidade()).append("\n");
+    private JPanel buildConsultarEstoquePanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField sedeIdF = new JTextField(5);
+        p.add(new JLabel("ID Sede:"), gbc);
+        gbc.gridx++; p.add(sedeIdF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton buscar = new JButton("Consultar");
+        buscar.addActionListener(e -> {
+            try {
+                List<Estoque> list = estoqueDAO.consultarEstoque(
+                        Integer.parseInt(sedeIdF.getText()));
+                StringBuilder sb = new StringBuilder();
+                for (Estoque es : list) {
+                    sb.append(es.getProduto_Nome()).append(" - ").append(es.getQuantidade()).append("\n");
+                }
+                JOptionPane.showMessageDialog(p, sb.length()>0?sb.toString():"Vazio");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(p, "Erro: " + ex.getMessage());
             }
-
-            JOptionPane.showMessageDialog(null, sb.length() > 0 ? sb.toString() : "Nenhum produto encontrado.");
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "ID inválido.");
-        }
+        });
+        p.add(buscar, gbc);
+        return p;
     }
 
-    private static void listarProdutos() {
-        StringBuilder sb = new StringBuilder("Produtos Cadastrados:\n");
-        for (Produto produto : produtoDAO.listar()) {
-            sb.append("ID: ").append(produto.getProduto_Id())
-                    .append(", Nome: ").append(produto.getProduto_Nome())
-                    .append(", Valor: R$").append(produto.getProduto_Valor())
-                    .append(", Quantidade no CD: ").append(produto.getQuant_CD()).append("\n");
-        }
-        JOptionPane.showMessageDialog(null, sb.toString());
-    }
-
-    private static void listarSedes() {
-        StringBuilder sb = new StringBuilder("Sedes Cadastradas:\n");
-        for (Sede sede : SedeDAO.listar()) {
-            sb.append("ID: ").append(sede.getSede_Id())
-                    .append(", Nome: ").append(sede.getSede_Nome())
-                    .append(", Cidade: ").append(sede.getSede_Cidade()).append("\n");
-        }
-        JOptionPane.showMessageDialog(null, sb.toString());
-    }
-
-    private static void listarPedidos() {
-        StringBuilder sb = new StringBuilder("Pedidos:\n");
-        for (Pedido pedido : pedidoDAO.pedidoListar()) {
-            sb.append("ID: ").append(pedido.getPedido_Id())
-                    .append(", Produto: ").append(pedido.getProduto_Id())
-                    .append(", Quantidade: ").append(pedido.getPedido_Quant())
-                    .append(", Status: ").append(pedido.getPedido_Status()).append("\n");
-        }
-        JOptionPane.showMessageDialog(null, sb.toString());
-    }
-
-    private static void consultarStatus() {
-        StringBuilder sb = new StringBuilder("Status dos Pedidos:\n");
-        for (Pedido pedido : StatusDAO.listarStatus()) {
-            sb.append("Pedido ID: ").append(pedido.getPedido_Id())
-                    .append(", Status: ").append(pedido.getPedido_Status()).append("\n");
-        }
-        JOptionPane.showMessageDialog(null, sb.toString());
-    }
-
-    private static void alterarStatus() {
-        try {
-            int pedidoId = Integer.parseInt(JOptionPane.showInputDialog("ID do Pedido:"));
-            String novoStatus = JOptionPane.showInputDialog("Novo Status:");
-
-            Pedido pedido = new Pedido();
-            pedido.setPedido_Id(pedidoId);
-            pedido.setPedido_Status(novoStatus);
-
-            boolean sucesso = StatusDAO.alterarStatus(pedido);
-
-            if (sucesso) {
-                JOptionPane.showMessageDialog(null, "Status atualizado com sucesso!");
-            } else {
-                JOptionPane.showMessageDialog(null, "Falha ao atualizar status.");
+    private JPanel buildAbastecerCDPanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField prodIdF = new JTextField(5);
+        JTextField qtdF = new JTextField(5);
+        p.add(new JLabel("ID Produto:"), gbc);
+        gbc.gridx++; p.add(prodIdF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Quantidade:"), gbc);
+        gbc.gridx++; p.add(qtdF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton bot = new JButton("Abastecer");
+        bot.addActionListener(e -> {
+            try {
+                Produto prod = new Produto();
+                prod.setProduto_Id(Integer.parseInt(prodIdF.getText()));
+                prod.setQuant_CD(Integer.parseInt(qtdF.getText()));
+                produtoDAO.abastecerCD(prod);
+                JOptionPane.showMessageDialog(p, "Abastecido!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(p, "Erro: " + ex.getMessage());
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "ID inválido.");
-        }
+        });
+        p.add(bot, gbc);
+        return p;
     }
 
-    private static void abastecerCD() {
-        try {
-            int prodId = Integer.parseInt(JOptionPane.showInputDialog("ID do Produto:"));
-            int quantidade = Integer.parseInt(JOptionPane.showInputDialog("Quantidade a Abastecer:"));
-
-            Produto produto = new Produto();
-            produto.setProduto_Id(prodId);
-            produto.setQuant_CD(quantidade);
-
-            produtoDAO.abastecerCD(produto);
-            JOptionPane.showMessageDialog(null, "Produto abastecido com sucesso!");
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Dados inválidos.");
-        }
-    }
-
-    private static void CadastrarCliente() {
-        String nome = JOptionPane.showInputDialog("Nome do Cliente:");
-        String cpf = JOptionPane.showInputDialog("CPF do Cliente:");
-        String telefone = JOptionPane.showInputDialog("Telefone do Cliente:");
-        String cidade = JOptionPane.showInputDialog("Cidade:");
-        String rua = JOptionPane.showInputDialog("Rua:");
-        String numStr = JOptionPane.showInputDialog("Número da residência:");
-
-        if (nome == null || cpf == null || telefone == null || cidade == null || rua == null || numStr == null) {
-            JOptionPane.showMessageDialog(null, "Cadastro cancelado.");
-            return;
-        }
-
-        try {
-            int numero = Integer.parseInt(numStr);
-
-            Cliente cliente = new Cliente();
-            cliente.setCliente_Nome(nome);
-            cliente.setCliente_Cpf(cpf);
-            cliente.setCliente_Tel(telefone);
-            cliente.setCliente_Cidade(cidade);
-            cliente.setCliente_Rua(rua);
-            cliente.setCliente_Numeracao(numero);
-
-            boolean sucesso = ClienteDAO.CadastrarCliente(cliente);
-
-            if (sucesso) {
-                JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso!");
-            } else {
-                JOptionPane.showMessageDialog(null, "Erro ao cadastrar cliente.");
+    private JPanel buildRegistrarVendaPanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField sedeIdF = new JTextField(5);
+        p.add(new JLabel("ID Sede:"), gbc);
+        gbc.gridx++; p.add(sedeIdF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton addItem = new JButton("Adicionar Itens");
+        List<Venda.ItemVenda> itens = new ArrayList<>();
+        addItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    int id = Integer.parseInt(JOptionPane.showInputDialog("ID Produto:"));
+                    int q = Integer.parseInt(JOptionPane.showInputDialog("Qtd:"));
+                    itens.add(new Venda.ItemVenda(id, q));
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(p, "Inválido");
+                }
             }
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Número inválido.");
-        }
+        });
+        p.add(addItem, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton salvar = new JButton("Salvar Venda");
+        salvar.addActionListener(e -> {
+            vendaDAO.registrarVenda(
+                    Integer.parseInt(sedeIdF.getText()), itens);
+            JOptionPane.showMessageDialog(p, "Venda ok");
+        });
+        p.add(salvar, gbc);
+        return p;
     }
 
-    private static void listarCliente() {
-        List<Cliente> clientes = ClienteDAO.listarCliente();
-
-        StringBuilder sb = new StringBuilder("Clientes Cadastrados:\n");
-        for (Cliente cliente : clientes) {
-            sb.append("ID: ").append(cliente.getCliente_Id())
-                    .append(", Nome: ").append(cliente.getCliente_Nome())
-                    .append(", CPF: ").append(cliente.getCliente_Cpf())
-                    .append(", Telefone: ").append(cliente.getCliente_Tel())
-                    .append("\n");
+    private JPanel buildConsultarStatusPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (Pedido pe : statusDAO.listarStatus()) {
+            model.addElement(
+                    String.format("ID:%d - %s", pe.getPedido_Id(), pe.getPedido_Status())
+            );
         }
-
-        JOptionPane.showMessageDialog(null, sb.length() > 0 ? sb.toString() : "Nenhum cliente encontrado.");
+        p.add(new JList<>(model), BorderLayout.CENTER);
+        return p;
     }
 
-    private static void CadastrarFornecedor() {
-        String nome = JOptionPane.showInputDialog("Nome do Fornecedor:");
-        String cnpj = JOptionPane.showInputDialog("CNPJ do Fornecedor:");
-        String catalogo = JOptionPane.showInputDialog("Catalogo do Fornecedor:");
-
-        if (nome == null || cnpj == null || catalogo == null) {
-            JOptionPane.showMessageDialog(null, "Cadastro cancelado.");
-            return;
-        }
-
-        try {
-            Fornecedor fornecedor = new Fornecedor();
-            fornecedor.setFornecedor_Nome(nome);
-            fornecedor.setFornecedor_Cnpj(cnpj);
-            fornecedor.setFornecedor_Catalogo(catalogo);
-
-            boolean sucesso = FornecedorDAO.CadastrarFornecedor(fornecedor);
-
-            if (sucesso) {
-                JOptionPane.showMessageDialog(null, "Fornecedor cadastrado com sucesso!");
-            } else {
-                JOptionPane.showMessageDialog(null, "Falha ao cadastrar fornecedor.");
+    private JPanel buildAlterarStatusPanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField idF = new JTextField(5);
+        JTextField statusF = new JTextField(10);
+        p.add(new JLabel("ID Pedido:"), gbc);
+        gbc.gridx++; p.add(idF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Novo Status:"), gbc);
+        gbc.gridx++; p.add(statusF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton bot = new JButton("Alterar");
+        bot.addActionListener(e -> {
+            try {
+                Pedido pe = new Pedido();
+                pe.setPedido_Id(Integer.parseInt(idF.getText()));
+                pe.setPedido_Status(statusF.getText());
+                statusDAO.alterarStatus(pe);
+                JOptionPane.showMessageDialog(p, "Atualizado");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(p, "Erro: " + ex.getMessage());
             }
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Número inválido.");
-        }
+        });
+        p.add(bot, gbc);
+        return p;
     }
 
+    private JPanel buildCadastrarClientePanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField nomeF = new JTextField(15);
+        JTextField cpfF = new JTextField(15);
+        JTextField telF = new JTextField(15);
+        JTextField cidadeF = new JTextField(15);
+        JTextField ruaF = new JTextField(15);
+        JTextField numF = new JTextField(5);
 
-    private static void listarFornecedor() {
-        List<Fornecedor> fornecedores = FornecedorDAO.listarFornecedor();
-
-        StringBuilder sb = new StringBuilder("Fornecedores Cadastrados:\n");
-        for (Fornecedor fornecedor : fornecedores) {
-            sb.append("ID: ").append(fornecedor.getFornecedor_Id())
-                    .append(", Nome: ").append(fornecedor.getFornecedor_Nome())
-                    .append(", CNPJ: ").append(fornecedor.getFornecedor_Cnpj())
-                    .append(", Catalogo: ").append(fornecedor.getFornecedor_Catalogo())
-                    .append("\n");
-        }
-
-        JOptionPane.showMessageDialog(null, sb.length() > 0 ? sb.toString() : "Nenhum fornecedor encontrado.");
+        p.add(new JLabel("Nome:"), gbc);
+        gbc.gridx++; p.add(nomeF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("CPF:"), gbc); gbc.gridx++; p.add(cpfF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Telefone:"), gbc); gbc.gridx++; p.add(telF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Cidade:"), gbc); gbc.gridx++; p.add(cidadeF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Rua:"), gbc); gbc.gridx++; p.add(ruaF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Número:"), gbc); gbc.gridx++; p.add(numF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton bot = new JButton("Salvar");
+        bot.addActionListener(e -> {
+            try {
+                Cliente cl = new Cliente();
+                cl.setCliente_Nome(nomeF.getText());
+                cl.setCliente_Cpf(cpfF.getText());
+                cl.setCliente_Tel(telF.getText());
+                cl.setCliente_Cidade(cidadeF.getText());
+                cl.setCliente_Rua(ruaF.getText());
+                cl.setCliente_Numeracao(Integer.parseInt(numF.getText()));
+                clienteDAO.CadastrarCliente(cl);
+                JOptionPane.showMessageDialog(p, "Cliente ok");
+            } catch(Exception ex) {
+                JOptionPane.showMessageDialog(p, "Erro: " + ex.getMessage());
+            }
+        });
+        p.add(bot, gbc);
+        return p;
     }
 
+    private JPanel buildListarClientesPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (Cliente c : clienteDAO.listarCliente()) {
+            model.addElement(
+                    String.format("ID:%d - %s - %s",
+                            c.getCliente_Id(), c.getCliente_Nome(), c.getCliente_Cpf())
+            );
+        }
+        p.add(new JList<>(model), BorderLayout.CENTER);
+        return p;
+    }
 
+    private JPanel buildCadastrarFornecedorPanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = defaultGbc();
+        JTextField nomeF = new JTextField(15);
+        JTextField cnpjF = new JTextField(15);
+        JTextField catF = new JTextField(20);
+        p.add(new JLabel("Nome:"), gbc);
+        gbc.gridx++; p.add(nomeF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("CNPJ:"), gbc); gbc.gridx++; p.add(cnpjF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        p.add(new JLabel("Catálogo:"), gbc); gbc.gridx++; p.add(catF, gbc);
+        gbc.gridx=0; gbc.gridy++;
+        JButton bot = new JButton("Salvar");
+        bot.addActionListener(e -> {
+            try {
+                Fornecedor f = new Fornecedor();
+                f.setFornecedor_Nome(nomeF.getText());
+                f.setFornecedor_Cnpj(cnpjF.getText());
+                f.setFornecedor_Catalogo(catF.getText());
+                fornecedorDAO.CadastrarFornecedor(f);
+                JOptionPane.showMessageDialog(p, "Fornecedor ok");
+            } catch(Exception ex) {
+                JOptionPane.showMessageDialog(p, "Erro: " + ex.getMessage());
+            }
+        });
+        p.add(bot, gbc);
+        return p;
+    }
+
+    private JPanel buildListarFornecedoresPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (Fornecedor f : fornecedorDAO.listarFornecedor()) {
+            model.addElement(
+                    String.format("ID:%d - %s - %s",
+                            f.getFornecedor_Id(), f.getFornecedor_Nome(), f.getFornecedor_Cnpj())
+            );
+        }
+        p.add(new JList<>(model), BorderLayout.CENTER);
+        return p;
+    }
+
+    private GridBagConstraints defaultGbc() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5,5,5,5);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0; gbc.gridy = 0;
+        return gbc;
+    }
 }
