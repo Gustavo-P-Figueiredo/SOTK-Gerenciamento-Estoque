@@ -352,10 +352,10 @@ public class Menu {
         System.out.print("Nome do Cliente: ");
         String nome = scanner.nextLine();
 
-        System.out.print("CPF do cliente: ");  //22222222223
+        System.out.print("CPF do cliente: ");  //22222222238
         String cpf = scanner.nextLine();
 
-        System.out.print("Telefone do cliente: "); //2298200412
+        System.out.print("Telefone do cliente: "); //2298201418
         String tel = scanner.nextLine();
 
         System.out.print("Cidade do cliente: ");
@@ -406,10 +406,10 @@ public class Menu {
         System.out.print("Nome do Fornecedor: ");
         String nome = scanner.nextLine();
 
-        System.out.print("CNPJ do Fornecedor: "); // Exemplo: 111111111115
+        System.out.print("CNPJ do Fornecedor: "); // Exemplo: 111111111134
         String cnpj = scanner.nextLine();
 
-        System.out.print("Catálogo do Fornecedor: "); // Exemplo: Pigmento Branco, Amarelo
+        System.out.print("Catálogo do Fornecedor: ");
         String catalogo = scanner.nextLine();
 
         Fornecedor fornecedor = new Fornecedor();
